@@ -40,7 +40,7 @@ claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
-  --allowedTools "Bash(npm run build:*)" "Edit" "Write" \
+  --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)" \
   --base-branch main \
   --interval 60
 ```
@@ -97,18 +97,30 @@ The dispatcher delegates tool permissions to Claude Code via command-line argume
 
 **For basic code changes:**
 ```bash
---allowedTools "Edit" "Write" "Read" "Bash(git add:*)" "Bash(git commit:*)"
+--allowedTools "Edit" "Write" "Read" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)"
 ```
 
-**For build and test operations:**
+**For full automation (recommended):**
 ```bash
---allowedTools "Edit" "Write" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(gh pr create:*)"
+--allowedTools "Edit" "Write" "Read" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
 ```
+
+**Minimal permissions (code changes only, no PR creation):**
+```bash
+--allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)"
+```
+
+**Required permissions for automation:**
+- `"Bash(git add:*)"` - Required for staging changes made by Claude Code
+- `"Bash(git commit:*)"` - Required for committing changes to the repository
+- `"Bash(git push:*)"` - Required for pushing branches to remote repository
+- `"Bash(gh pr create:*)"` - Required for creating pull requests via GitHub CLI
 
 **Security considerations:**
 - Always use specific patterns (e.g., `"Bash(npm run build:*)"` instead of `"Bash"`)
 - Explicitly disallow dangerous operations with `--disallowedTools`
 - Review tool permissions regularly based on your repository's needs
+- The dispatcher will fail if git/PR permissions are missing from allowedTools
 
 ## How It Works
 
@@ -129,7 +141,7 @@ claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
-  --allowedTools "Bash(npm run build:*)" "Edit" "Write"
+  --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
 ```
 
 ### Custom Configuration
@@ -140,7 +152,7 @@ claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
-  --allowedTools "Bash(npm run build:*)" "Bash(npm run test:*)" "Edit" "Write" \
+  --allowedTools "Edit" "Write" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)" \
   --disallowedTools "WebFetch" "Bash(rm:*)" \
   --base-branch develop \
   --interval 30 \
@@ -166,7 +178,7 @@ npm install
 npm run build
 
 # Run in development mode
-npm run dev -- start --owner myorg --repo myproject --assignee developer --allowedTools "Edit" "Write" "Bash(npm run build:*)"
+npm run dev -- start --owner myorg --repo myproject --assignee developer --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
 
 # Type checking
 npm run typecheck
