@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   dependency-review:
+  # Skip on private repos where Dependency Review (and GHAS) is not enabled
+  if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
     
     steps:
@@ -21,12 +23,25 @@ jobs:
     - name: Dependency Review
       uses: actions/dependency-review-action@v3
       with:
-        # Fail if any vulnerabilities are found
+        # Fail if any vulnerabilities are found at or above this severity
         fail-on-severity: moderate
+        # Enable specific checks (both are true by default, but set explicitly for clarity)
+        license-check: true
+        vulnerability-check: true
         # Allow only these licenses
-        allowed-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
+        allow-licenses: |
+          MIT
+          Apache-2.0
+          BSD-2-Clause
+          BSD-3-Clause
+          ISC
+          0BSD
         # Deny these licenses
-        denied-licenses: GPL-2.0, GPL-3.0, AGPL-1.0, AGPL-3.0
+        deny-licenses: |
+          GPL-2.0
+          GPL-3.0
+          AGPL-1.0
+          AGPL-3.0
         # Comment on PR with details
         comment-summary-in-pr: always
 

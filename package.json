@@ -23,7 +23,7 @@
     "cli",
     "dispatcher"
   ],
-  "author": "",
+  "author": "k1e1n04",
   "license": "MIT",
   "dependencies": {
     "commander": "^11.0.0",
