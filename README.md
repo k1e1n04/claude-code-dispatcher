@@ -18,7 +18,7 @@ Claude Code Dispatcher monitors GitHub issues assigned to a specific user, proce
 
 ## Prerequisites
 
-- Node.js 16.0.0 or higher
+- Node.js 18.0.0 or higher
 - [GitHub CLI](https://cli.github.com/) installed and authenticated
 - [Claude CLI](https://claude.ai/code) installed and authenticated (supports `--print` flag for non-interactive mode)
 - Git repository with appropriate permissions
