@@ -22,13 +22,18 @@ export const logger = winston.createLogger({
           }
           return msg;
         })
-      )
-    })
-  ]
+      ),
+    }),
+  ],
 });
 
 function isNonRetryableError(err: unknown): err is { nonRetryable: true } {
-  return !!err && typeof err === 'object' && 'nonRetryable' in err && (err as any).nonRetryable === true;
+  return (
+    !!err &&
+    typeof err === 'object' &&
+    'nonRetryable' in err &&
+    (err as { nonRetryable?: unknown }).nonRetryable === true
+  );
 }
 
 export class RetryHandler {
@@ -39,31 +44,35 @@ export class RetryHandler {
     operationName: string = 'operation'
   ): Promise<T> {
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        logger.info(`Attempting ${operationName} (attempt ${attempt}/${maxRetries})`);
+        logger.info(
+          `Attempting ${operationName} (attempt ${attempt}/${maxRetries})`
+        );
         return await operation();
       } catch (error) {
         lastError = error as Error;
         // If the operation provided a nonRetryable flag, stop retrying immediately
         if (isNonRetryableError(lastError)) {
-          logger.error(`${operationName} failed with non-retryable error: ${lastError}`);
+          logger.error(
+            `${operationName} failed with non-retryable error: ${lastError}`
+          );
           throw lastError;
         }
         logger.warn(`${operationName} failed on attempt ${attempt}: ${error}`);
-        
+
         if (attempt === maxRetries) {
           logger.error(`${operationName} failed after ${maxRetries} attempts`);
           throw lastError;
         }
-        
+
         const delay = delayMs * Math.pow(2, attempt - 1);
         logger.info(`Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError!;
   }
 }

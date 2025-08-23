@@ -123,21 +123,7 @@ export class ClaudeCodeDispatcher {
       const result = await this.processor.processIssue(issue, this.config.baseBranch);
       
       if (result.success && result.branchName) {
-        try {
-          const pullRequestUrl = await this.githubClient.createPullRequest(
-            this.config.owner,
-            this.config.repo,
-            result.branchName,
-            this.config.baseBranch,
-            `Fix issue #${issue.number}: ${issue.title}`,
-            this.createPullRequestBody(issue, result.branchName)
-          );
-          
-          logger.info(`Successfully created pull request for issue #${issue.number}: ${pullRequestUrl}`);
-          
-        } catch (error) {
-          logger.error(`Failed to create pull request for issue #${issue.number}:`, error);
-        }
+        logger.info(`Successfully created pull request for issue #${issue.number}`);
       } else {
         logger.error(`Failed to process issue #${issue.number}: ${result.error}`);
         this.githubClient.markIssueAsProcessed(issue.id);
@@ -151,7 +137,7 @@ export class ClaudeCodeDispatcher {
     }
   }
 
-  private createPullRequestBody(issue: GitHubIssue, branchName: string): string {
+private createPullRequestBody(issue: GitHubIssue, branchName: string): string {
     let body = '## 📋 Issue Summary\n\n';
     body += `Fixes #${issue.number}\n\n`;
     body += `**Original Issue:** ${issue.title}\n\n`;
