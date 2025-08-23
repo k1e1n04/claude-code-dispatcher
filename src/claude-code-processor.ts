@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import * as fs from 'fs';
 import { GitHubIssue, ProcessingResult } from './types';
 import { logger } from './logger';
 import { RetryHandler } from './logger';
@@ -124,8 +123,8 @@ export class ClaudeCodeProcessor {
     try {
       logger.info('Executing ClaudeCode via stdin...');
       
-      const command = 'claude code';
-      const child = execSync(command, {
+  const command = 'claude code';
+  execSync(command, {
         cwd: this.workingDirectory,
         input: prompt,
         encoding: 'utf8',
