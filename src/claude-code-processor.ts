@@ -122,15 +122,17 @@ export class ClaudeCodeProcessor {
   private async executeClaudeCode(prompt: string): Promise<void> {
     try {
       logger.info('Executing ClaudeCode via stdin...');
-      
-  const command = 'claude code';
-  execSync(command, {
+
+      const command = 'claude code --print';
+      const output = execSync(command, {
         cwd: this.workingDirectory,
         input: prompt,
         encoding: 'utf8',
-        stdio: ['pipe', 'inherit', 'inherit'],
+        stdio: ['pipe', 'pipe', 'inherit'],
         timeout: 300000
       });
+      
+      logger.info(`ClaudeCode response: ${output.substring(0, 200)}...`);
       
       logger.info('ClaudeCode execution completed');
     } catch (error) {

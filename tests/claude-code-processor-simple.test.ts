@@ -152,6 +152,22 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
         expect(call[1]).toMatchObject({ cwd: '/test/workspace' });
       });
     });
+
+    test('should execute ClaudeCode in non-interactive mode', async () => {
+      await processor.processIssue(mockIssue, 'main');
+
+      const claudeCall = mockExecSync.mock.calls.find(call => 
+        call[0].toString().includes('claude code')
+      );
+      
+      expect(claudeCall?.[0]).toBe('claude code --print');
+      expect(claudeCall?.[1]).toMatchObject({
+        stdio: ['pipe', 'pipe', 'inherit'],
+        input: expect.stringContaining('Test issue'),
+        encoding: 'utf8',
+        timeout: 300000
+      });
+    });
   });
 
   describe('processIssue - error handling', () => {
