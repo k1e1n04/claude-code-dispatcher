@@ -2,7 +2,10 @@ import { ClaudeCodeDispatcher } from '../src/dispatcher';
 import { GitHubClient } from '../src/github-client';
 import { IssueQueue } from '../src/issue-queue';
 import { IssuePoller } from '../src/poller';
-import { ClaudeCodeProcessor } from '../src/claude-code-processor';
+import { GitRepository } from '../src/git-repository';
+import { ClaudeCodeExecutor } from '../src/claude-executor';
+import { PromptBuilder } from '../src/prompt-builder';
+import { IssueProcessor } from '../src/issue-processor';
 import { RetryHandler } from '../src/logger';
 import { DispatcherConfig, GitHubIssue } from '../src/types';
 
@@ -60,7 +63,10 @@ describe('Core Functionality Tests', () => {
       expect(() => {
         new GitHubClient();
         new IssueQueue();
-        new ClaudeCodeProcessor();
+        const gitRepository = new GitRepository('/test');
+        const claudeExecutor = new ClaudeCodeExecutor({ workingDirectory: '/test' });
+        const promptBuilder = new PromptBuilder();
+        new IssueProcessor(gitRepository, claudeExecutor, promptBuilder);
       }).not.toThrow();
     });
   });
