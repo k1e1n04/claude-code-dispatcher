@@ -57,10 +57,14 @@ This document outlines the recommended branch protection settings for this repos
 
 ## Setup Instructions
 
-1. Go to **Settings** → **Branches**
-2. Click **Add rule** for each branch
+### GitHub UI Configuration (Recommended)
+
+1. Go to **Settings** → **Branches** in GitHub repository
+2. Click **Add rule** for each branch (`main` and `develop`)
 3. Configure the settings as described above
 4. Save the rules
+
+**Note:** Branch protection rules must be configured through GitHub's web interface, not through GitHub Actions workflows. The `block-merge-on-failure` pattern in workflows is an anti-pattern since GitHub's built-in branch protection provides better integration and reliability.
 
 ## Quality Gates Summary
 
