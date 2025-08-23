@@ -4,12 +4,12 @@
   "description": "CLI tool to integrate ClaudeCode with GitHub for automated issue processing",
   "main": "dist/index.js",
   "bin": {
-    "claude-code-dispatcher": "./dist/cli.js"
+    "claude-code-dispatcher": "./bin/claude-code-dispatcher"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/cli.js",
-    "dev": "ts-node src/cli.ts",
+    "start": "node dist/commands/index.js",
+    "dev": "ts-node src/commands/index.ts",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "test": "jest",

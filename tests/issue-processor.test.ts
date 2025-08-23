@@ -1,12 +1,12 @@
-import { IssueProcessor } from '../src/issue-processor';
-import { IGitRepository } from '../src/git-repository';
-import { IClaudeCodeExecutor } from '../src/claude-executor';
-import { IPromptBuilder } from '../src/prompt-builder';
+import { IssueProcessor } from '../src/services';
+import { IGitRepository } from '../src/infrastructure';
+import { IClaudeCodeExecutor } from '../src/clients';
+import { IPromptBuilder } from '../src/utils';
 import { GitHubIssue } from '../src/types';
-import { RetryHandler } from '../src/logger';
+import { RetryHandler } from '../src/utils';
 
 // Mock the RetryHandler
-jest.mock('../src/logger', () => ({
+jest.mock('../src/utils', () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),

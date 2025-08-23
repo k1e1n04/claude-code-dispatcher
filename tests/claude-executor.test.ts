@@ -1,4 +1,4 @@
-import { ClaudeCodeExecutor } from '../src/claude-executor';
+import { ClaudeCodeExecutor } from '../src/clients';
 import { execSync } from 'child_process';
 
 jest.mock('child_process');

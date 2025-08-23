@@ -1,4 +1,4 @@
-import { ClaudeCodeDispatcher } from '../src/dispatcher';
+import { ClaudeCodeDispatcher } from '../src/services';
 import { DispatcherConfig } from '../src/types';
 import { execSync } from 'child_process';
 

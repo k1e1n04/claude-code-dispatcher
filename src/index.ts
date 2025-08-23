@@ -1,10 +1,5 @@
-export { ClaudeCodeDispatcher } from './dispatcher';
-export { GitHubClient } from './github-client';
-export { IssueQueue } from './issue-queue';
-export { IssuePoller } from './poller';
-export { IssueProcessor } from './issue-processor';
-export { GitRepository, IGitRepository } from './git-repository';
-export { ClaudeCodeExecutor, IClaudeCodeExecutor } from './claude-executor';
-export { PromptBuilder, IPromptBuilder } from './prompt-builder';
-export { logger, RetryHandler } from './logger';
+export { ClaudeCodeDispatcher, IssueQueue, IssuePoller, IssueProcessor } from './services';
+export { GitHubClient, ClaudeCodeExecutor, IClaudeCodeExecutor } from './clients';
+export { GitRepository, IGitRepository } from './infrastructure';
+export { logger, RetryHandler, PromptBuilder, IPromptBuilder } from './utils';
 export * from './types';
