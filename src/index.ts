@@ -2,7 +2,6 @@ export { ClaudeCodeDispatcher } from './dispatcher';
 export { GitHubClient } from './github-client';
 export { IssueQueue } from './issue-queue';
 export { IssuePoller } from './poller';
-export { ClaudeCodeProcessor } from './claude-code-processor';
 export { IssueProcessor } from './issue-processor';
 export { GitRepository, IGitRepository } from './git-repository';
 export { ClaudeCodeExecutor, IClaudeCodeExecutor } from './claude-executor';
