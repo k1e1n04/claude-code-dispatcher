@@ -255,19 +255,19 @@ Claude Code Dispatcher uses a modular architecture with clear separation of conc
 
 ```mermaid
 flowchart TD
-  subgraph Dispatcher["ClaudeCodeDispatcher\n(Central Orchestrator)"]
+  subgraph Dispatcher["ClaudeCodeDispatcher(Central Orchestrator)"]
   end
 
-  Dispatcher --> IssuePoller["IssuePoller\n(GitHub polling)"]
-  Dispatcher --> IssueQueue["IssueQueue\n(FIFO queue)"]
-  IssuePoller --> IssueProcessor["IssueProcessor\n(Issue handling)"]
+  Dispatcher --> IssuePoller["IssuePoller(GitHub polling)"]
+  Dispatcher --> IssueQueue["IssueQueue(FIFO queue)"]
+  IssuePoller --> IssueProcessor["IssueProcessor(Issue handling)"]
 
-  IssueProcessor --> GitHubClient["GitHubClient\n(API interactions)"]
-  IssueProcessor --> ClaudeCodeExecutor["ClaudeCodeExecutor\n(Code generation)"]
+  IssueProcessor --> GitHubClient["GitHubClient(API interactions)"]
+  IssueProcessor --> ClaudeCodeExecutor["ClaudeCodeExecutor(Code generation)"]
 
-  GitHubClient --> GitHub["GitHub\n(Issues & PRs)"]
-  ClaudeCodeExecutor --> PromptBuilder["PromptBuilder\n(Claude prompts)"]
-  PromptBuilder --> GitRepository["GitRepository\n(Git operations)"]
+  GitHubClient --> GitHub["GitHub(Issues & PRs)"]
+  ClaudeCodeExecutor --> PromptBuilder["PromptBuilder(Claude prompts)"]
+  PromptBuilder --> GitRepository["GitRepository(Git operations)"]
 ```
 
 ### Directory Structure
