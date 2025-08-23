@@ -257,6 +257,24 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
       const command = (processorYoloWithDisallowed as any).buildClaudeCommand();
       expect(command).toBe('claude code --print --dangerously-skip-permissions --disallowedTools "WebFetch"');
     });
+
+    test('should build default command when no tools or dangerous mode specified', () => {
+      const processorDefault = new ClaudeCodeProcessor('/test/workspace');
+      
+      const command = (processorDefault as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print');
+    });
+
+    test('should include only disallowed tools in default mode', () => {
+      const processorDefaultWithDisallowed = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        [], 
+        ['WebFetch']
+      );
+      
+      const command = (processorDefaultWithDisallowed as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --disallowedTools "WebFetch"');
+    });
   });
 
 });

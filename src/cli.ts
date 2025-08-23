@@ -27,11 +27,6 @@ program
   .option('--disallowedTools <tools...>', 'List of disallowed tools for Claude Code (optional)')
   .action(async (options) => {
     try {
-      // Validate that either allowedTools or dangerously-skip-permissions is provided
-      if (!options.allowedTools && !options.dangerouslySkipPermissions) {
-        logger.error('Either --allowedTools or --dangerously-skip-permissions must be specified');
-        process.exit(1);
-      }
 
       // Warn user about dangerous mode
       if (options.dangerouslySkipPermissions) {

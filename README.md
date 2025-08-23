@@ -45,12 +45,20 @@ claude-code-dispatcher start \
   --base-branch main \
   --interval 60
 
-# Or with YOLO mode (for trusted environments only)
+# With YOLO mode (for trusted environments only)
 claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
   --dangerously-skip-permissions \
+  --base-branch main \
+  --interval 60
+
+# Without explicit permissions (uses Claude CLI's default settings)
+claude-code-dispatcher start \
+  --owner <github-owner> \
+  --repo <repository-name> \
+  --assignee <github-username> \
   --base-branch main \
   --interval 60
 ```
@@ -79,7 +87,7 @@ claude-code-dispatcher validate \
 | `--owner` | `-o` | GitHub repository owner | Required |
 | `--repo` | `-r` | GitHub repository name | Required |
 | `--assignee` | `-a` | GitHub username to monitor | Required |
-| `--allowedTools` | | List of allowed tools for Claude Code | Required* |
+| `--allowedTools` | | List of allowed tools for Claude Code | Optional |
 | `--dangerously-skip-permissions` | | Skip permission checks (YOLO mode) | Optional |
 | `--disallowedTools` | | List of disallowed tools for Claude Code | Optional |
 | `--base-branch` | `-b` | Base branch for PRs | `main` |
@@ -87,11 +95,13 @@ claude-code-dispatcher validate \
 | `--max-retries` | | Maximum retry attempts | `3` |
 | `--working-dir` | `-w` | Git operations directory | Current directory |
 
-\* Either `--allowedTools` or `--dangerously-skip-permissions` must be specified.
-
 ## Tool Permissions
 
-The dispatcher delegates tool permissions to Claude Code via command-line arguments. This follows the [Claude Code settings format](https://docs.anthropic.com/ja/docs/claude-code/settings).
+The dispatcher supports three permission modes for Claude Code execution:
+
+1. **Explicit permissions** (`--allowedTools`) - Define exactly which tools Claude Code can use
+2. **YOLO mode** (`--dangerously-skip-permissions`) - Grant unrestricted access (use with caution)
+3. **Default mode** (no flags) - Use Claude CLI's default settings and existing configuration
 
 ### YOLO Mode (⚠️ Use with Caution)
 
