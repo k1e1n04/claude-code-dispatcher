@@ -98,7 +98,7 @@ jobs:
         node dist/cli.js --help || echo "CLI help command executed"
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist-files
         path: dist/
