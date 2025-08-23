@@ -22,40 +22,8 @@ Claude Code Dispatcher monitors GitHub issues assigned to a specific user, proce
 - [GitHub CLI](https://cli.github.com/) installed and authenticated
 - [Claude CLI](https://claude.ai/code) installed and authenticated (supports `--print` flag for non-interactive mode)
 - Git repository with appropriate permissions
-- set up [`settings.json`](https://docs.anthropic.com/ja/docs/claude-code/settings) for Claude CLI with necessary permissions and allowed tools (e.g., "Bash", "Edit", "Write")
-  ```json
-  {
-    "permissions": {
-      "allow": [
-        "Bash(npm run build:*)",
-        "Bash(npm install)",
-        "Bash(npm run typecheck:*)",
-        "Bash(npm run test:*)",
-        "Bash(npm test:*)",
-        "Bash(claude code:*)",
-        "Bash(git checkout:*)",
-        "Bash(git push:*)",
-        "Bash(git pull:*)",
-        "Bash(git fetch:*)",
-        "Bash(git merge:*)",
-        "Bash(git switch:*)",
-        "Bash(git add:*)", // Required for staging changes
-        "Bash(git commit:*)", // Required for committing changes
-        "Bash(gh pr create:*)", // Required for creating pull requests
-        "Write(./*)",
-        "Edit(./*)"
-      ],
-      "deny": [
-        "Read(./.env)",
-        "Read(./.env*)",
-        "Read(./secrets/**)"
-      ],
-      "ask": []
-    }
-  }
-  ```
 
-**Note**: This tool requires Claude CLI to support non-interactive execution via the `--print` flag for automation purposes.
+**Note**: This tool requires Claude CLI to support non-interactive execution via the `--print` flag for automation purposes. Tool permissions are configured via command-line arguments rather than settings files.
 
 ## Installation
 
@@ -72,6 +40,7 @@ claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
+  --allowedTools "Bash(npm run build:*)" "Edit" "Write" \
   --base-branch main \
   --interval 60
 ```
@@ -100,10 +69,46 @@ claude-code-dispatcher validate \
 | `--owner` | `-o` | GitHub repository owner | Required |
 | `--repo` | `-r` | GitHub repository name | Required |
 | `--assignee` | `-a` | GitHub username to monitor | Required |
+| `--allowedTools` | | List of allowed tools for Claude Code | Required |
+| `--disallowedTools` | | List of disallowed tools for Claude Code | Optional |
 | `--base-branch` | `-b` | Base branch for PRs | `main` |
 | `--interval` | `-i` | Polling interval (seconds) | `60` |
 | `--max-retries` | | Maximum retry attempts | `3` |
 | `--working-dir` | `-w` | Git operations directory | Current directory |
+
+## Tool Permissions
+
+The dispatcher delegates tool permissions to Claude Code via command-line arguments. This follows the [Claude Code settings format](https://docs.anthropic.com/ja/docs/claude-code/settings).
+
+### Common Tool Examples
+
+```bash
+# Allow basic file operations and safe bash commands
+--allowedTools "Edit" "Write" "Read" "Bash(npm run build:*)" "Bash(git add:*)" "Bash(git commit:*)"
+
+# Allow additional development tools
+--allowedTools "Edit" "Write" "Bash(npm run test:*)" "Bash(npm run lint:*)" "Bash(gh pr create:*)"
+
+# Restrict dangerous operations
+--disallowedTools "Bash(rm:*)" "Bash(sudo:*)" "WebFetch"
+```
+
+### Recommended Tool Sets
+
+**For basic code changes:**
+```bash
+--allowedTools "Edit" "Write" "Read" "Bash(git add:*)" "Bash(git commit:*)"
+```
+
+**For build and test operations:**
+```bash
+--allowedTools "Edit" "Write" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(gh pr create:*)"
+```
+
+**Security considerations:**
+- Always use specific patterns (e.g., `"Bash(npm run build:*)"` instead of `"Bash"`)
+- Explicitly disallow dangerous operations with `--disallowedTools`
+- Review tool permissions regularly based on your repository's needs
 
 ## How It Works
 
@@ -123,17 +128,20 @@ claude-code-dispatcher validate \
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
-  --assignee developer
+  --assignee developer \
+  --allowedTools "Bash(npm run build:*)" "Edit" "Write"
 ```
 
 ### Custom Configuration
 
 ```bash
-# Poll every 30 seconds with custom base branch
+# Poll every 30 seconds with custom base branch and tool restrictions
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
+  --allowedTools "Bash(npm run build:*)" "Bash(npm run test:*)" "Edit" "Write" \
+  --disallowedTools "WebFetch" "Bash(rm:*)" \
   --base-branch develop \
   --interval 30 \
   --max-retries 5
@@ -158,7 +166,7 @@ npm install
 npm run build
 
 # Run in development mode
-npm run dev -- start --owner myorg --repo myproject --assignee developer
+npm run dev -- start --owner myorg --repo myproject --assignee developer --allowedTools "Edit" "Write" "Bash(npm run build:*)"
 
 # Type checking
 npm run typecheck
