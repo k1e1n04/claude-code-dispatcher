@@ -11,7 +11,8 @@ export class ClaudeCodeProcessor {
   constructor(
     private workingDirectory: string = process.cwd(),
     private allowedTools: string[] = [],
-    private disallowedTools: string[] = []
+    private disallowedTools: string[] = [],
+    private dangerouslySkipPermissions: boolean = false
   ) {}
 
   /**
@@ -147,15 +148,18 @@ export class ClaudeCodeProcessor {
   private buildClaudeCommand(): string {
     let command = 'claude code --print';
     
-    // Add allowed tools
-    if (this.allowedTools.length > 0) {
+    // Use dangerously-skip-permissions if enabled
+    if (this.dangerouslySkipPermissions) {
+      command += ' --dangerously-skip-permissions';
+    } else if (this.allowedTools.length > 0) {
+      // Add allowed tools only if not in dangerous mode
       const allowedToolsArgs = this.allowedTools
         .map(tool => `"${tool}"`)
         .join(' ');
       command += ` --allowedTools ${allowedToolsArgs}`;
     }
     
-    // Add disallowed tools if specified
+    // Add disallowed tools if specified (works with both modes)
     if (this.disallowedTools && this.disallowedTools.length > 0) {
       const disallowedToolsArgs = this.disallowedTools
         .map(tool => `"${tool}"`)

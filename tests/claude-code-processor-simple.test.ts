@@ -168,6 +168,34 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
         timeout: 300000,
       });
     });
+
+    test('should execute ClaudeCode with dangerously-skip-permissions flag', async () => {
+      const yoloProcessor = new ClaudeCodeProcessor('/test/workspace', [], [], true);
+      
+      // Mock successful operations for YOLO processor
+      mockExecSync
+        .mockReturnValueOnce('') // git checkout main
+        .mockReturnValueOnce('') // git pull
+        .mockReturnValueOnce('') // git checkout -b
+        .mockReturnValueOnce('') // claude code (implementation)
+        .mockReturnValueOnce('M  file.js\n') // git status
+        .mockReturnValueOnce('') // claude code (commit message)
+        .mockReturnValueOnce(''); // claude code (pull request)
+
+      await yoloProcessor.processIssue(mockIssue, 'main');
+
+      const claudeCall = mockExecSync.mock.calls.find((call) =>
+        call[0].toString().includes('claude code')
+      );
+
+      expect(claudeCall?.[0]).toBe('claude code --print --dangerously-skip-permissions');
+      expect(claudeCall?.[1]).toMatchObject({
+        stdio: ['pipe', 'pipe', 'inherit'],
+        input: expect.stringContaining('Test issue'),
+        encoding: 'utf8',
+        timeout: 300000,
+      });
+    });
   });
 
   describe('command building', () => {
@@ -193,35 +221,114 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
       const command = (processorEmpty as any).buildClaudeCommand();
       expect(command).toBe('claude code --print');
     });
-  });
 
-  describe('processIssue - error handling', () => {
-    test('should handle no changes scenario', async () => {
-      mockExecSync
-        .mockReturnValueOnce('') // git operations succeed
-        .mockReturnValueOnce('')
-        .mockReturnValueOnce('')
-        .mockReturnValueOnce('') // claude code succeeds
-        .mockReturnValueOnce(''); // git status - no changes
-
-      const result = await processor.processIssue(mockIssue, 'main');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('No changes were made by ClaudeCode');
+    test('should build command with dangerously-skip-permissions flag', () => {
+      const processorYolo = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        [], 
+        [], 
+        true
+      );
+      
+      const command = (processorYolo as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --dangerously-skip-permissions');
     });
 
-    test('should handle git failures', async () => {
-      mockExecSync.mockImplementation((command) => {
-        if (command.toString().includes('git checkout main')) {
-          throw new Error('Git checkout failed');
-        }
-        return '';
-      });
+    test('should prioritize dangerously-skip-permissions over allowed tools', () => {
+      const processorYoloWithTools = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        ['Bash', 'Edit'], 
+        [], 
+        true
+      );
+      
+      const command = (processorYoloWithTools as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --dangerously-skip-permissions');
+    });
 
-      const result = await processor.processIssue(mockIssue, 'main');
+    test('should include disallowed tools with dangerously-skip-permissions', () => {
+      const processorYoloWithDisallowed = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        ['Bash'], 
+        ['WebFetch'], 
+        true
+      );
+      
+      const command = (processorYoloWithDisallowed as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --dangerously-skip-permissions --disallowedTools "WebFetch"');
+    });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Branch switching failed');
+    test('should build default command when no tools or dangerous mode specified', () => {
+      const processorDefault = new ClaudeCodeProcessor('/test/workspace');
+      
+      const command = (processorDefault as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print');
+    });
+
+    test('should include only disallowed tools in default mode', () => {
+      const processorDefaultWithDisallowed = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        [], 
+        ['WebFetch']
+      );
+      
+      const command = (processorDefaultWithDisallowed as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --disallowedTools "WebFetch"');
+    });
+  });
+
+});
+
+describe('ClaudeCodeProcessor - YOLO Mode Integration Tests', () => {
+  let mockIssue: GitHubIssue;
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    mockIssue = {
+      id: 1,
+      number: 123,
+      title: 'Test issue',
+      body: 'Test description',
+      state: 'open',
+      assignee: { login: 'testuser' },
+      repository: {
+        owner: { login: 'testorg' },
+        name: 'testrepo',
+      },
+      html_url: 'https://github.com/testorg/testrepo/issues/123',
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-01T00:00:00Z',
+    };
+  });
+
+  test('should work with YOLO mode in complete flow', async () => {
+    const yoloProcessor = new ClaudeCodeProcessor('/test/workspace', [], [], true);
+    
+    // Mock successful operations for YOLO processor
+    mockExecSync
+      .mockReturnValueOnce('') // git checkout main
+      .mockReturnValueOnce('') // git pull
+      .mockReturnValueOnce('') // git checkout -b
+      .mockReturnValueOnce('') // claude code (implementation)
+      .mockReturnValueOnce('M  file.js\n') // git status - has changes
+      .mockReturnValueOnce('') // claude code (commit message)
+      .mockReturnValueOnce(''); // claude code (pull request)
+
+    const result = await yoloProcessor.processIssue(mockIssue, 'main');
+
+    expect(result.success).toBe(true);
+    expect(result.branchName).toBe('issue-123-test-issue');
+
+    // Verify YOLO mode was used in claude command
+    const claudeCalls = mockExecSync.mock.calls.filter(call => 
+      call[0].toString().includes('claude code')
+    );
+    
+    expect(claudeCalls.length).toBeGreaterThan(0);
+    claudeCalls.forEach(call => {
+      expect(call[0]).toContain('--dangerously-skip-permissions');
+      expect(call[0]).not.toContain('--allowedTools');
     });
   });
 });

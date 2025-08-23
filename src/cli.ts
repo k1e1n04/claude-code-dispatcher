@@ -18,7 +18,8 @@ program
   .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
   .requiredOption('-r, --repo <repo>', 'GitHub repository name')
   .requiredOption('-a, --assignee <assignee>', 'GitHub username to monitor for assigned issues')
-  .requiredOption('--allowedTools <tools...>', 'List of allowed tools for Claude Code (required)')
+  .option('--allowedTools <tools...>', 'List of allowed tools for Claude Code')
+  .option('--dangerously-skip-permissions', 'Skip permission checks (YOLO mode - use with caution)')
   .option('-b, --base-branch <branch>', 'Base branch for pull requests', 'main')
   .option('-i, --interval <seconds>', 'Polling interval in seconds', '60')
   .option('--max-retries <count>', 'Maximum retry attempts', '3')
@@ -26,6 +27,18 @@ program
   .option('--disallowedTools <tools...>', 'List of disallowed tools for Claude Code (optional)')
   .action(async (options) => {
     try {
+
+      // Warn user about dangerous mode
+      if (options.dangerouslySkipPermissions) {
+        logger.warn('⚠️  YOLO mode enabled: --dangerously-skip-permissions grants full filesystem and shell access');
+        logger.warn('⚠️  This should only be used in safe, non-production environments');
+        
+        // If both are provided, warn that dangerously-skip-permissions takes precedence
+        if (options.allowedTools) {
+          logger.warn('⚠️  Both --allowedTools and --dangerously-skip-permissions provided: YOLO mode takes precedence');
+        }
+      }
+
       const config: DispatcherConfig = {
         owner: options.owner,
         repo: options.repo,
@@ -34,7 +47,8 @@ program
         pollInterval: parseInt(options.interval),
         maxRetries: parseInt(options.maxRetries),
         allowedTools: options.allowedTools,
-        disallowedTools: options.disallowedTools
+        disallowedTools: options.disallowedTools,
+        dangerouslySkipPermissions: options.dangerouslySkipPermissions
       };
 
       logger.info('Starting Claude Code Dispatcher with configuration:', config);
