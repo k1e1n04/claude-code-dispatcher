@@ -1,12 +1,7 @@
-import { ClaudeCodeDispatcher } from '../src/dispatcher';
-import { GitHubClient } from '../src/github-client';
-import { IssueQueue } from '../src/issue-queue';
-import { IssuePoller } from '../src/poller';
-import { GitRepository } from '../src/git-repository';
-import { ClaudeCodeExecutor } from '../src/claude-executor';
-import { PromptBuilder } from '../src/prompt-builder';
-import { IssueProcessor } from '../src/issue-processor';
-import { RetryHandler } from '../src/logger';
+import { ClaudeCodeDispatcher, IssueQueue, IssueProcessor } from '../src/services';
+import { GitHubClient, ClaudeCodeExecutor } from '../src/clients';
+import { GitRepository } from '../src/infrastructure';
+import { RetryHandler, PromptBuilder } from '../src/utils';
 import { DispatcherConfig, GitHubIssue } from '../src/types';
 
 describe('Core Functionality Tests', () => {
