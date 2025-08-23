@@ -36,10 +36,6 @@
 Closes #
 Relates to #
 
-## 📸 Screenshots (if applicable)
-
-<!-- Add screenshots or GIFs if the changes include UI modifications -->
-
 ## ✅ Pre-merge Checklist
 
 - [ ] Code follows the project's coding standards
@@ -55,8 +51,6 @@ Relates to #
 <!-- Add any deployment considerations or steps -->
 
 - [ ] No deployment steps required
-- [ ] Requires environment variable updates
-- [ ] Requires database migrations
 - [ ] Requires documentation updates
 
 ## 📞 Reviewer Notes
