@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import * as fs from 'fs';
 import { GitHubIssue, ProcessingResult } from './types';
 import { logger } from './logger';
 import { RetryHandler } from './logger';
@@ -103,7 +102,7 @@ export class ClaudeCodeProcessor {
   }
 
   private createPromptFromIssue(issue: GitHubIssue): string {
-    let prompt = `Please help implement the following GitHub issue:\n\n`;
+    let prompt = 'Please help implement the following GitHub issue:\n\n';
     prompt += `Title: ${issue.title}\n\n`;
     
     if (issue.body) {
@@ -111,7 +110,7 @@ export class ClaudeCodeProcessor {
     }
     
     prompt += `Issue URL: ${issue.html_url}\n\n`;
-    prompt += `Please implement the required changes and ensure the code follows best practices.`;
+    prompt += 'Please implement the required changes and ensure the code follows best practices.';
     
     return prompt;
   }
@@ -123,7 +122,7 @@ export class ClaudeCodeProcessor {
   private async executeClaudeCode(prompt: string): Promise<void> {
     try {
       logger.info('Executing ClaudeCode via stdin...');
-      
+
       const command = 'claude code --print';
       const output = execSync(command, {
         cwd: this.workingDirectory,
