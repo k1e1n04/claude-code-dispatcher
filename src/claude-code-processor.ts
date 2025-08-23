@@ -42,9 +42,22 @@ export class ClaudeCodeProcessor {
           error: 'No changes were made by ClaudeCode'
         };
       }
+
+      const commitPrompt = this.createCommitAndPushPrompt();
+      await RetryHandler.withRetry(
+        () => this.executeClaudeCode(commitPrompt),
+        3,
+        2000,
+        `ClaudeCode commit and push generation for issue #${issue.number}`
+      );
       
-      await this.commitChanges(issue);
-      await this.pushBranch(branchName);
+      const prPrompt = this.createPullRequestBPrompt(baseBranch);
+      await RetryHandler.withRetry(
+        () => this.executeClaudeCode(prPrompt),
+        3,
+        2000,
+        `ClaudeCode pull request generation for issue #${issue.number}`
+      );
       
       return {
         success: true,
@@ -115,6 +128,14 @@ export class ClaudeCodeProcessor {
     return prompt;
   }
 
+  private createCommitAndPushPrompt(): string {
+    return 'Please create a concise and descriptive commit message summarizing the changes made. The message should follow best practices for commit messages. After committing, please push the changes to the remote repository.';
+  }
+
+  private createPullRequestBPrompt(baseBranch: string): string {
+    return 'Please create a pull request targeting the base branch ' + baseBranch + '. If a PULL_REQUEST_TEMPLATE exists in the repository, please use it to format the pull request description. Ensure the title is clear and references the issue being addressed.';
+  }
+
   /**
    * Executes ClaudeCode with the provided prompt
    * @param prompt - Formatted prompt containing issue details
@@ -170,52 +191,6 @@ export class ClaudeCodeProcessor {
     } catch (error) {
       logger.error('Failed to check for changes:', error);
       return false;
-    }
-  }
-
-  private async commitChanges(issue: GitHubIssue): Promise<void> {
-    try {
-      logger.info('Committing changes...');
-      
-      execSync('git add .', { 
-        cwd: this.workingDirectory, 
-        stdio: 'pipe' 
-      });
-      
-      const commitMessage = `Implement issue #${issue.number}: ${issue.title}
-
-${issue.body || 'No description provided'}
-
-Closes #${issue.number}
-
-🤖 Generated with Claude Code Dispatcher
-Co-Authored-By: Claude <noreply@anthropic.com>`;
-      
-      execSync(`git commit -m "${commitMessage}"`, { 
-        cwd: this.workingDirectory, 
-        stdio: 'pipe' 
-      });
-      
-      logger.info('Changes committed successfully');
-    } catch (error) {
-      logger.error('Failed to commit changes:', error);
-      throw new Error(`Commit failed: ${error}`);
-    }
-  }
-
-  private async pushBranch(branchName: string): Promise<void> {
-    try {
-      logger.info(`Pushing branch: ${branchName}`);
-      
-      execSync(`git push -u origin ${branchName}`, { 
-        cwd: this.workingDirectory, 
-        stdio: 'pipe' 
-      });
-      
-      logger.info('Branch pushed successfully');
-    } catch (error) {
-      logger.error('Failed to push branch:', error);
-      throw new Error(`Push failed: ${error}`);
     }
   }
 }
