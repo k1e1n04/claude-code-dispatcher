@@ -8,7 +8,11 @@ import { RetryHandler } from './logger';
  * Handles branch management, code generation, and git operations
  */
 export class ClaudeCodeProcessor {
-  constructor(private workingDirectory: string = process.cwd()) {}
+  constructor(
+    private workingDirectory: string = process.cwd(),
+    private allowedTools: string[] = [],
+    private disallowedTools: string[] = []
+  ) {}
 
   /**
    * Processes a GitHub issue by creating a branch and generating code
@@ -137,6 +141,32 @@ export class ClaudeCodeProcessor {
   }
 
   /**
+   * Builds the Claude Code command with appropriate tool permissions
+   * @returns Complete command string with tool settings
+   */
+  private buildClaudeCommand(): string {
+    let command = 'claude code --print';
+    
+    // Add allowed tools
+    if (this.allowedTools.length > 0) {
+      const allowedToolsArgs = this.allowedTools
+        .map(tool => `"${tool}"`)
+        .join(' ');
+      command += ` --allowedTools ${allowedToolsArgs}`;
+    }
+    
+    // Add disallowed tools if specified
+    if (this.disallowedTools && this.disallowedTools.length > 0) {
+      const disallowedToolsArgs = this.disallowedTools
+        .map(tool => `"${tool}"`)
+        .join(' ');
+      command += ` --disallowedTools ${disallowedToolsArgs}`;
+    }
+    
+    return command;
+  }
+
+  /**
    * Executes ClaudeCode with the provided prompt
    * @param prompt - Formatted prompt containing issue details
    */
@@ -144,7 +174,7 @@ export class ClaudeCodeProcessor {
     try {
       logger.info('Executing ClaudeCode via stdin...');
 
-      const command = 'claude code --print';
+      const command = this.buildClaudeCommand();
       const output = execSync(command, {
         cwd: this.workingDirectory,
         input: prompt,
