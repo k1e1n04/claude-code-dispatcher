@@ -8,6 +8,31 @@ import { PromptBuilder } from './prompt-builder';
 import { DispatcherConfig, GitHubIssue } from './types';
 import { logger } from './logger';
 
+/**
+ * Central dispatcher for automating GitHub issue processing using Claude Code
+ * 
+ * The ClaudeCodeDispatcher orchestrates the entire workflow from issue detection
+ * to pull request creation. It uses a modular architecture with dependency injection
+ * for better testability and maintainability.
+ * 
+ * @example
+ * ```typescript
+ * const config = {
+ *   owner: 'myorg',
+ *   repo: 'myproject', 
+ *   assignee: 'developer',
+ *   baseBranch: 'main',
+ *   pollInterval: 60,
+ *   maxRetries: 3,
+ *   allowedTools: ['Edit', 'Write', 'Bash(git add:*)', 'Bash(git commit:*)', 'Bash(git push:*)', 'Bash(gh pr create:*)']
+ * };
+ * 
+ * const dispatcher = new ClaudeCodeDispatcher(config, '/project/path');
+ * await dispatcher.start();
+ * ```
+ * 
+ * @since 1.0.0
+ */
 export class ClaudeCodeDispatcher {
   private githubClient: GitHubClient;
   private issueQueue: IssueQueue;
@@ -16,6 +41,29 @@ export class ClaudeCodeDispatcher {
   private isRunning = false;
   private processingLoop: NodeJS.Timeout | null = null;
 
+  /**
+   * Creates a new ClaudeCodeDispatcher instance
+   * 
+   * Initializes all components including GitHub client, issue queue, poller, and processor
+   * using the new modular architecture with dependency injection.
+   * 
+   * @param config - Configuration options for the dispatcher
+   * @param workingDirectory - Working directory for git operations (defaults to current working directory)
+   * 
+   * @example
+   * ```typescript
+   * const config = {
+   *   owner: 'myorg',
+   *   repo: 'myproject',
+   *   assignee: 'developer', 
+   *   baseBranch: 'main',
+   *   pollInterval: 60,
+   *   maxRetries: 3,
+   *   allowedTools: ['Edit', 'Write']
+   * };
+   * const dispatcher = new ClaudeCodeDispatcher(config, '/project/path');
+   * ```
+   */
   constructor(private config: DispatcherConfig, workingDirectory?: string) {
     this.githubClient = new GitHubClient();
     this.issueQueue = new IssueQueue();
@@ -34,6 +82,27 @@ export class ClaudeCodeDispatcher {
     this.processor = new IssueProcessor(gitRepository, claudeExecutor, promptBuilder);
   }
 
+  /**
+   * Starts the dispatcher and begins monitoring for GitHub issues
+   * 
+   * This method:
+   * 1. Validates prerequisites (GitHub CLI, Claude CLI, repository access)
+   * 2. Starts the issue poller 
+   * 3. Begins the processing loop
+   * 4. Sets up graceful shutdown handlers
+   * 
+   * @throws {Error} When prerequisites validation fails or startup encounters an error
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await dispatcher.start();
+   *   console.log('Dispatcher started successfully');
+   * } catch (error) {
+   *   console.error('Failed to start dispatcher:', error);
+   * }
+   * ```
+   */
   async start(): Promise<void> {
     if (this.isRunning) {
       logger.warn('Dispatcher is already running');
@@ -62,6 +131,25 @@ export class ClaudeCodeDispatcher {
     }
   }
 
+  /**
+   * Stops the dispatcher and cleans up resources
+   * 
+   * This method gracefully shuts down:
+   * - Issue polling
+   * - Processing loops  
+   * - Background timers
+   * 
+   * Safe to call multiple times - will only stop once.
+   * 
+   * @example
+   * ```typescript
+   * // Graceful shutdown
+   * process.on('SIGINT', async () => {
+   *   await dispatcher.stop();
+   *   process.exit(0);
+   * });
+   * ```
+   */
   async stop(): Promise<void> {
     if (!this.isRunning) {
       return;
@@ -83,6 +171,17 @@ export class ClaudeCodeDispatcher {
     logger.info('Claude Code Dispatcher stopped');
   }
 
+  /**
+   * Validates that all required prerequisites are available
+   * 
+   * Checks for:
+   * - GitHub CLI authentication 
+   * - Repository access permissions
+   * - Claude CLI availability
+   * 
+   * @private
+   * @throws {Error} When any prerequisite check fails
+   */
   private async validatePrerequisites(): Promise<void> {
     try {
       const { execSync } = await import('child_process');
@@ -102,6 +201,14 @@ export class ClaudeCodeDispatcher {
     }
   }
 
+  /**
+   * Starts the main processing loop that handles queued issues
+   * 
+   * The loop runs every 5 seconds and processes one issue at a time.
+   * It only processes when the queue is not empty and not currently processing.
+   * 
+   * @private
+   */
   private startProcessingLoop(): void {
     const processNext = async () => {
       if (!this.isRunning) {
@@ -128,6 +235,18 @@ export class ClaudeCodeDispatcher {
     processNext();
   }
 
+  /**
+   * Processes a single GitHub issue through the complete workflow
+   * 
+   * This method delegates to the IssueProcessor which handles:
+   * 1. Branch creation
+   * 2. Code generation via Claude Code
+   * 3. Commit and push
+   * 4. Pull request creation
+   * 
+   * @private
+   * @param issue - The GitHub issue to process
+   */
   private async processIssue(issue: GitHubIssue): Promise<void> {
     this.issueQueue.setProcessing(true);
     
@@ -152,6 +271,14 @@ export class ClaudeCodeDispatcher {
   }
 
 
+  /**
+   * Keeps the dispatcher alive and logs periodic status updates
+   * 
+   * Runs every 30 seconds to log current status including queue size,
+   * processing state, and polling state.
+   * 
+   * @private
+   */
   private keepAlive(): void {
     const keepAliveInterval = setInterval(() => {
       if (!this.isRunning) {
@@ -164,6 +291,22 @@ export class ClaudeCodeDispatcher {
     }, 30000);
   }
 
+  /**
+   * Gets the current status of the dispatcher
+   * 
+   * @returns Current status including polling state, processing state, queue size, and next issue
+   * 
+   * @example
+   * ```typescript
+   * const status = dispatcher.getStatus();
+   * console.log(`Queue size: ${status.queueSize}`);
+   * console.log(`Polling: ${status.polling ? 'Active' : 'Inactive'}`);
+   * console.log(`Processing: ${status.processing ? 'Active' : 'Inactive'}`);
+   * if (status.nextIssue) {
+   *   console.log(`Next issue: #${status.nextIssue.number} - ${status.nextIssue.title}`);
+   * }
+   * ```
+   */
   getStatus(): {
     polling: boolean;
     processing: boolean;
