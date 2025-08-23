@@ -32,93 +32,8 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
     };
   });
 
-  describe('branch name generation', () => {
-    test('should generate valid branch name', () => {
-      // Access private method through any cast for testing
-      const branchName = (processor as any).generateBranchName(mockIssue);
-
-      expect(branchName).toBe('issue-123-test-issue');
-      expect(branchName).toMatch(/^issue-\d+-[a-z0-9-]+$/);
-    });
-
-    test('should sanitize special characters', () => {
-      const specialIssue = {
-        ...mockIssue,
-        title: 'Fix: OAuth2.0 & JWT auth (special chars!)',
-      };
-
-      const branchName = (processor as any).generateBranchName(specialIssue);
-
-      expect(branchName).not.toMatch(/[^a-z0-9-]/);
-      expect(branchName).toContain('issue-123');
-    });
-
-    test('should truncate long titles', () => {
-      const longIssue = {
-        ...mockIssue,
-        title:
-          'This is a very long title that should be truncated to prevent git branch name issues',
-      };
-
-      const branchName = (processor as any).generateBranchName(longIssue);
-
-      expect(branchName.length).toBeLessThanOrEqual(60);
-    });
-  });
-
-  describe('prompt creation', () => {
-    test('should create proper prompt with issue details', () => {
-      const prompt = (processor as any).createPromptFromIssue(mockIssue);
-
-      expect(prompt).toContain('Test issue');
-      expect(prompt).toContain('Test description');
-      expect(prompt).toContain(
-        'https://github.com/testorg/testrepo/issues/123'
-      );
-      expect(prompt).toContain('Please implement');
-    });
-
-    test('should handle issue without body', () => {
-      const issueWithoutBody = { ...mockIssue, body: null };
-
-      const prompt = (processor as any).createPromptFromIssue(issueWithoutBody);
-
-      expect(prompt).toContain('Test issue');
-      expect(prompt).not.toContain('null');
-    });
-  });
-
-  describe('git operations', () => {
-    test('should check for changes correctly', async () => {
-      mockExecSync.mockReturnValue('M  src/file.js\n');
-
-      const hasChanges = await (processor as any).checkForChanges();
-
-      expect(hasChanges).toBe(true);
-      expect(mockExecSync).toHaveBeenCalledWith('git status --porcelain', {
-        cwd: '/test/workspace',
-        encoding: 'utf8',
-      });
-    });
-
-    test('should detect no changes', async () => {
-      mockExecSync.mockReturnValue('');
-
-      const hasChanges = await (processor as any).checkForChanges();
-
-      expect(hasChanges).toBe(false);
-    });
-
-    test('should handle git errors gracefully', async () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Git not available');
-      });
-
-      const hasChanges = await (processor as any).checkForChanges();
-
-      expect(hasChanges).toBe(false);
-    });
-  });
+  // Note: Individual component tests are now covered in their respective test files
+  // (git-repository.test.ts, claude-executor.test.ts, prompt-builder.test.ts)
 
   describe('processIssue - successful flow', () => {
     beforeEach(() => {
@@ -198,88 +113,11 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
     });
   });
 
-  describe('command building', () => {
-    test('should build command with allowed tools only', () => {
-      const command = (processor as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --allowedTools "Bash" "Edit" "Write"');
-    });
-
-    test('should build command with allowed and disallowed tools', () => {
-      const processorWithDisallowed = new ClaudeCodeProcessor(
-        '/test/workspace', 
-        ['Bash', 'Edit'], 
-        ['WebFetch']
-      );
-      
-      const command = (processorWithDisallowed as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --allowedTools "Bash" "Edit" --disallowedTools "WebFetch"');
-    });
-
-    test('should build basic command when no tools specified', () => {
-      const processorEmpty = new ClaudeCodeProcessor('/test/workspace', []);
-      
-      const command = (processorEmpty as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print');
-    });
-
-    test('should build command with dangerously-skip-permissions flag', () => {
-      const processorYolo = new ClaudeCodeProcessor(
-        '/test/workspace', 
-        [], 
-        [], 
-        true
-      );
-      
-      const command = (processorYolo as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --dangerously-skip-permissions');
-    });
-
-    test('should prioritize dangerously-skip-permissions over allowed tools', () => {
-      const processorYoloWithTools = new ClaudeCodeProcessor(
-        '/test/workspace', 
-        ['Bash', 'Edit'], 
-        [], 
-        true
-      );
-      
-      const command = (processorYoloWithTools as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --dangerously-skip-permissions');
-    });
-
-    test('should include disallowed tools with dangerously-skip-permissions', () => {
-      const processorYoloWithDisallowed = new ClaudeCodeProcessor(
-        '/test/workspace', 
-        ['Bash'], 
-        ['WebFetch'], 
-        true
-      );
-      
-      const command = (processorYoloWithDisallowed as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --dangerously-skip-permissions --disallowedTools "WebFetch"');
-    });
-
-    test('should build default command when no tools or dangerous mode specified', () => {
-      const processorDefault = new ClaudeCodeProcessor('/test/workspace');
-      
-      const command = (processorDefault as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print');
-    });
-
-    test('should include only disallowed tools in default mode', () => {
-      const processorDefaultWithDisallowed = new ClaudeCodeProcessor(
-        '/test/workspace', 
-        [], 
-        ['WebFetch']
-      );
-      
-      const command = (processorDefaultWithDisallowed as any).buildClaudeCommand();
-      expect(command).toBe('claude code --print --disallowedTools "WebFetch"');
-    });
-  });
+  // Command building tests moved to claude-executor.test.ts
 
 });
 
-describe('ClaudeCodeProcessor - YOLO Mode Integration Tests', () => {
+describe('ClaudeCodeProcessor - Integration Tests', () => {
   let mockIssue: GitHubIssue;
   
   beforeEach(() => {
@@ -302,10 +140,10 @@ describe('ClaudeCodeProcessor - YOLO Mode Integration Tests', () => {
     };
   });
 
-  test('should work with YOLO mode in complete flow', async () => {
-    const yoloProcessor = new ClaudeCodeProcessor('/test/workspace', [], [], true);
+  test('should maintain backward compatibility with original API', async () => {
+    const processor = new ClaudeCodeProcessor('/test/workspace', ['Edit', 'Write']);
     
-    // Mock successful operations for YOLO processor
+    // Mock successful operations
     mockExecSync
       .mockReturnValueOnce('') // git checkout main
       .mockReturnValueOnce('') // git pull
@@ -315,20 +153,13 @@ describe('ClaudeCodeProcessor - YOLO Mode Integration Tests', () => {
       .mockReturnValueOnce('') // claude code (commit message)
       .mockReturnValueOnce(''); // claude code (pull request)
 
-    const result = await yoloProcessor.processIssue(mockIssue, 'main');
+    const result = await processor.processIssue(mockIssue, 'main');
 
     expect(result.success).toBe(true);
     expect(result.branchName).toBe('issue-123-test-issue');
-
-    // Verify YOLO mode was used in claude command
-    const claudeCalls = mockExecSync.mock.calls.filter(call => 
-      call[0].toString().includes('claude code')
-    );
     
-    expect(claudeCalls.length).toBeGreaterThan(0);
-    claudeCalls.forEach(call => {
-      expect(call[0]).toContain('--dangerously-skip-permissions');
-      expect(call[0]).not.toContain('--allowedTools');
-    });
+    // Verify the new architecture still works through the legacy interface
+    expect(mockExecSync).toHaveBeenCalledWith('git checkout main', expect.any(Object));
+    expect(mockExecSync).toHaveBeenCalledWith('git checkout -b issue-123-test-issue', expect.any(Object));
   });
 });
