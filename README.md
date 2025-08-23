@@ -253,31 +253,21 @@ npm run lint
 
 Claude Code Dispatcher uses a modular architecture with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                          ClaudeCodeDispatcher                                   │
-│                          (Central Orchestrator)                                 │
-└─────────────────────┬─────────────────┬─────────────────┬─────────────────────┘
-                      │                 │                 │
-         ┌────────────▼──────────┐  ┌───▼────────────┐  ┌─▼────────────────┐
-         │      IssuePoller      │  │   IssueQueue   │  │  IssueProcessor  │
-         │   (GitHub polling)    │  │ (FIFO queue)   │  │ (Issue handling) │
-         └───────────┬───────────┘  └────────────────┘  └──────────┬───────┘
-                     │                                              │
-         ┌───────────▼───────────┐                      ┌──────────▼───────────┐
-         │     GitHubClient      │                      │   ClaudeCodeExecutor │
-         │  (API interactions)   │                      │   (Code generation)  │
-         └───────────────────────┘                      └──────────────────────┘
-                     │                                              │
-         ┌───────────▼───────────┐                      ┌──────────▼───────────┐
-         │       GitHub          │                      │     PromptBuilder    │
-         │    (Issues & PRs)     │                      │  (Claude prompts)    │
-         └───────────────────────┘                      └──────────────────────┘
-                                                                   │
-                                            ┌──────────────────────▼──────────────────────┐
-                                            │              GitRepository               │
-                                            │           (Git operations)              │
-                                            └─────────────────────────────────────────┘
+```mermaid
+flowchart TD
+  subgraph Dispatcher[ClaudeCodeDispatcher<br/>(Central Orchestrator)]
+  end
+
+  Dispatcher --> IssuePoller[IssuePoller<br/>(GitHub polling)]
+  Dispatcher --> IssueQueue[IssueQueue<br/>(FIFO queue)]
+  IssuePoller --> IssueProcessor[IssueProcessor<br/>(Issue handling)]
+
+  IssueProcessor --> GitHubClient[GitHubClient<br/>(API interactions)]
+  IssueProcessor --> ClaudeCodeExecutor[ClaudeCodeExecutor<br/>(Code generation)]
+
+  GitHubClient --> GitHub[GitHub<br/>(Issues & PRs)]
+  ClaudeCodeExecutor --> PromptBuilder[PromptBuilder<br/>(Claude prompts)]
+  PromptBuilder --> GitRepository[GitRepository<br/>(Git operations)]
 ```
 
 ### Directory Structure
