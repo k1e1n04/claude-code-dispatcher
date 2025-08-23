@@ -36,11 +36,21 @@ npm install -g claude-code-dispatcher
 ### Start the Dispatcher
 
 ```bash
+# With explicit tool permissions (recommended for production)
 claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
   --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)" \
+  --base-branch main \
+  --interval 60
+
+# Or with YOLO mode (for trusted environments only)
+claude-code-dispatcher start \
+  --owner <github-owner> \
+  --repo <repository-name> \
+  --assignee <github-username> \
+  --dangerously-skip-permissions \
   --base-branch main \
   --interval 60
 ```
@@ -69,16 +79,46 @@ claude-code-dispatcher validate \
 | `--owner` | `-o` | GitHub repository owner | Required |
 | `--repo` | `-r` | GitHub repository name | Required |
 | `--assignee` | `-a` | GitHub username to monitor | Required |
-| `--allowedTools` | | List of allowed tools for Claude Code | Required |
+| `--allowedTools` | | List of allowed tools for Claude Code | Required* |
+| `--dangerously-skip-permissions` | | Skip permission checks (YOLO mode) | Optional |
 | `--disallowedTools` | | List of disallowed tools for Claude Code | Optional |
 | `--base-branch` | `-b` | Base branch for PRs | `main` |
 | `--interval` | `-i` | Polling interval (seconds) | `60` |
 | `--max-retries` | | Maximum retry attempts | `3` |
 | `--working-dir` | `-w` | Git operations directory | Current directory |
 
+\* Either `--allowedTools` or `--dangerously-skip-permissions` must be specified.
+
 ## Tool Permissions
 
 The dispatcher delegates tool permissions to Claude Code via command-line arguments. This follows the [Claude Code settings format](https://docs.anthropic.com/ja/docs/claude-code/settings).
+
+### YOLO Mode (⚠️ Use with Caution)
+
+The `--dangerously-skip-permissions` flag enables "YOLO mode" which bypasses all tool permission restrictions. This mode:
+
+- **Grants full filesystem access** to Claude Code
+- **Allows all shell commands** without restrictions
+- **Should only be used in safe, non-production environments**
+- **Is intended for local prototyping and experimentation**
+
+**⚠️ Security Warning**: YOLO mode grants Claude Code unrestricted access to your system. Only use this in trusted, isolated environments where full system access is acceptable.
+
+```bash
+# YOLO mode - use only in safe environments
+claude-code-dispatcher start \
+  --owner myorg \
+  --repo myproject \
+  --assignee developer \
+  --dangerously-skip-permissions
+
+# Production-safe mode - explicitly define allowed tools
+claude-code-dispatcher start \
+  --owner myorg \
+  --repo myproject \
+  --assignee developer \
+  --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
+```
 
 ### Common Tool Examples
 
@@ -136,12 +176,19 @@ The dispatcher delegates tool permissions to Claude Code via command-line argume
 ### Basic Usage
 
 ```bash
-# Start monitoring issues for user 'developer' in 'myorg/myproject'
+# Start monitoring issues for user 'developer' in 'myorg/myproject' (production-safe)
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
   --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
+
+# Quick experimentation with YOLO mode (⚠️ use with caution)
+claude-code-dispatcher start \
+  --owner myorg \
+  --repo myproject \
+  --assignee developer \
+  --dangerously-skip-permissions
 ```
 
 ### Custom Configuration
@@ -177,8 +224,11 @@ npm install
 # Build the project
 npm run build
 
-# Run in development mode
+# Run in development mode (with explicit tools)
 npm run dev -- start --owner myorg --repo myproject --assignee developer --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
+
+# Run in development mode (YOLO mode for quick testing)
+npm run dev -- start --owner myorg --repo myproject --assignee developer --dangerously-skip-permissions
 
 # Type checking
 npm run typecheck

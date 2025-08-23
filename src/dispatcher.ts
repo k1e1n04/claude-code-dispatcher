@@ -17,7 +17,12 @@ export class ClaudeCodeDispatcher {
     this.githubClient = new GitHubClient();
     this.issueQueue = new IssueQueue();
     this.poller = new IssuePoller(this.githubClient, this.issueQueue, config);
-    this.processor = new ClaudeCodeProcessor(workingDirectory, config.allowedTools, config.disallowedTools);
+    this.processor = new ClaudeCodeProcessor(
+      workingDirectory, 
+      config.allowedTools || [], 
+      config.disallowedTools || [], 
+      config.dangerouslySkipPermissions || false
+    );
   }
 
   async start(): Promise<void> {

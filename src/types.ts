@@ -31,8 +31,9 @@ export interface DispatcherConfig {
   baseBranch: string;
   pollInterval: number;
   maxRetries: number;
-  allowedTools: string[];
+  allowedTools?: string[];
   disallowedTools?: string[];
+  dangerouslySkipPermissions?: boolean;
 }
 
 /**
