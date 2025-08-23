@@ -20,7 +20,8 @@ describe('IssuePoller - Simple Tests', () => {
       assignee: 'testuser',
       baseBranch: 'main',
       pollInterval: 1, // Short interval for testing
-      maxRetries: 2
+      maxRetries: 2,
+      allowedTools: ['Edit', 'Write']
     };
 
     poller = new IssuePoller(githubClient, issueQueue, config);

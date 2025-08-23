@@ -18,10 +18,12 @@ program
   .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
   .requiredOption('-r, --repo <repo>', 'GitHub repository name')
   .requiredOption('-a, --assignee <assignee>', 'GitHub username to monitor for assigned issues')
+  .requiredOption('--allowedTools <tools...>', 'List of allowed tools for Claude Code (required)')
   .option('-b, --base-branch <branch>', 'Base branch for pull requests', 'main')
   .option('-i, --interval <seconds>', 'Polling interval in seconds', '60')
   .option('--max-retries <count>', 'Maximum retry attempts', '3')
   .option('-w, --working-dir <path>', 'Working directory for git operations', process.cwd())
+  .option('--disallowedTools <tools...>', 'List of disallowed tools for Claude Code (optional)')
   .action(async (options) => {
     try {
       const config: DispatcherConfig = {
@@ -30,7 +32,9 @@ program
         assignee: options.assignee,
         baseBranch: options.baseBranch,
         pollInterval: parseInt(options.interval),
-        maxRetries: parseInt(options.maxRetries)
+        maxRetries: parseInt(options.maxRetries),
+        allowedTools: options.allowedTools,
+        disallowedTools: options.disallowedTools
       };
 
       logger.info('Starting Claude Code Dispatcher with configuration:', config);
@@ -71,7 +75,8 @@ program
         assignee: options.assignee,
         baseBranch: 'main',
         pollInterval: 60,
-        maxRetries: 3
+        maxRetries: 3,
+        allowedTools: []
       };
 
       const dispatcher = new ClaudeCodeDispatcher(config);

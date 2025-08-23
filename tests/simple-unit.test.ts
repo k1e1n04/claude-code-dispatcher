@@ -47,7 +47,8 @@ describe('Core Functionality Tests', () => {
         assignee: 'test',
         baseBranch: 'main',
         pollInterval: 60,
-        maxRetries: 3
+        maxRetries: 3,
+        allowedTools: ['Edit', 'Write']
       };
 
       expect(() => {

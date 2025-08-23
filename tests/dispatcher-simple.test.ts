@@ -18,7 +18,8 @@ describe('ClaudeCodeDispatcher - Simple Tests', () => {
       assignee: 'testuser',
       baseBranch: 'main',
       pollInterval: 60,
-      maxRetries: 3
+      maxRetries: 3,
+      allowedTools: ['Bash', 'Edit', 'Write']
     };
 
     // Mock successful prerequisites by default

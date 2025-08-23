@@ -12,7 +12,7 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
   let mockIssue: GitHubIssue;
 
   beforeEach(() => {
-    processor = new ClaudeCodeProcessor('/test/workspace');
+    processor = new ClaudeCodeProcessor('/test/workspace', ['Bash', 'Edit', 'Write']);
     jest.clearAllMocks();
 
     mockIssue = {
@@ -153,20 +153,45 @@ describe('ClaudeCodeProcessor - Simple Tests', () => {
       });
     });
 
-    test('should execute ClaudeCode in non-interactive mode', async () => {
+    test('should execute ClaudeCode in non-interactive mode with allowed tools', async () => {
       await processor.processIssue(mockIssue, 'main');
 
       const claudeCall = mockExecSync.mock.calls.find((call) =>
         call[0].toString().includes('claude code')
       );
 
-      expect(claudeCall?.[0]).toBe('claude code --print');
+      expect(claudeCall?.[0]).toBe('claude code --print --allowedTools "Bash" "Edit" "Write"');
       expect(claudeCall?.[1]).toMatchObject({
         stdio: ['pipe', 'pipe', 'inherit'],
         input: expect.stringContaining('Test issue'),
         encoding: 'utf8',
         timeout: 300000,
       });
+    });
+  });
+
+  describe('command building', () => {
+    test('should build command with allowed tools only', () => {
+      const command = (processor as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --allowedTools "Bash" "Edit" "Write"');
+    });
+
+    test('should build command with allowed and disallowed tools', () => {
+      const processorWithDisallowed = new ClaudeCodeProcessor(
+        '/test/workspace', 
+        ['Bash', 'Edit'], 
+        ['WebFetch']
+      );
+      
+      const command = (processorWithDisallowed as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print --allowedTools "Bash" "Edit" --disallowedTools "WebFetch"');
+    });
+
+    test('should build basic command when no tools specified', () => {
+      const processorEmpty = new ClaudeCodeProcessor('/test/workspace', []);
+      
+      const command = (processorEmpty as any).buildClaudeCommand();
+      expect(command).toBe('claude code --print');
     });
   });
 
