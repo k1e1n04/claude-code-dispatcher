@@ -121,6 +121,9 @@ temp/
 *.tmp
 *.temp
 
+# Devcontainer files
+.devcontainer/
+
 # Claude Code Dispatcher specific
 claude-prompt-*.txt
 *.backup
