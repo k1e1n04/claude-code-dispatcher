@@ -22,6 +22,38 @@ Claude Code Dispatcher monitors GitHub issues assigned to a specific user, proce
 - [GitHub CLI](https://cli.github.com/) installed and authenticated
 - [Claude CLI](https://claude.ai/code) installed and authenticated (supports `--print` flag for non-interactive mode)
 - Git repository with appropriate permissions
+- set up [`settings.json`](https://docs.anthropic.com/ja/docs/claude-code/settings) for Claude CLI with necessary permissions and allowed tools (e.g., "Bash", "Edit", "Write")
+  ```json
+  {
+    "permissions": {
+      "allow": [
+        "Bash(npm run build:*)",
+        "Bash(npm install)",
+        "Bash(npm run typecheck:*)",
+        "Bash(npm run test:*)",
+        "Bash(npm test:*)",
+        "Bash(claude code:*)",
+        "Bash(git checkout:*)",
+        "Bash(git push:*)",
+        "Bash(git pull:*)",
+        "Bash(git fetch:*)",
+        "Bash(git merge:*)",
+        "Bash(git switch:*)",
+        "Bash(git add:*)", // Required for staging changes
+        "Bash(git commit:*)", // Required for committing changes
+        "Bash(gh pr create:*)", // Required for creating pull requests
+        "Write(./*)",
+        "Edit(./*)"
+      ],
+      "deny": [
+        "Read(./.env)",
+        "Read(./.env*)",
+        "Read(./secrets/**)"
+      ],
+      "ask": []
+    }
+  }
+  ```
 
 **Note**: This tool requires Claude CLI to support non-interactive execution via the `--print` flag for automation purposes.
 
