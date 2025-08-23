@@ -27,6 +27,10 @@ export const logger = winston.createLogger({
   ]
 });
 
+function isNonRetryableError(err: unknown): err is { nonRetryable: true } {
+  return !!err && typeof err === 'object' && 'nonRetryable' in err && (err as any).nonRetryable === true;
+}
+
 export class RetryHandler {
   static async withRetry<T>(
     operation: () => Promise<T>,
@@ -42,6 +46,11 @@ export class RetryHandler {
         return await operation();
       } catch (error) {
         lastError = error as Error;
+        // If the operation provided a nonRetryable flag, stop retrying immediately
+        if (isNonRetryableError(lastError)) {
+          logger.error(`${operationName} failed with non-retryable error: ${lastError}`);
+          throw lastError;
+        }
         logger.warn(`${operationName} failed on attempt ${attempt}: ${error}`);
         
         if (attempt === maxRetries) {

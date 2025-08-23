@@ -133,9 +133,27 @@ export class ClaudeCodeProcessor {
       });
       
       logger.info(`ClaudeCode response: ${output.substring(0, 200)}...`);
+      // Detect rate-limit or quota messages and treat them as non-retryable
+      if (/limit reached|rate limit|quota/i.test(output)) {
+        type NonRetryableError = Error & { nonRetryable: true };
+        const err = new Error(`ClaudeCode rate limit/quota reached: ${output.trim().split('\n')[0]}`) as NonRetryableError;
+        err.nonRetryable = true;
+        throw err;
+      }
       
       logger.info('ClaudeCode execution completed');
     } catch (error) {
+      // If execSync produced stdout with a rate-limit message, attach nonRetryable flag
+      const errObj = error as unknown as { stdout?: string; message?: string };
+      const stderrLike = errObj?.stdout || errObj?.message || String(error);
+      if (/limit reached|rate limit|quota/i.test(String(stderrLike))) {
+        type NonRetryableError = Error & { nonRetryable: true };
+        const e = new Error(`ClaudeCode execution failed: ${stderrLike}`) as NonRetryableError;
+        e.nonRetryable = true;
+        logger.error('ClaudeCode execution failed (non-retryable):', e);
+        throw e;
+      }
+
       logger.error('ClaudeCode execution failed:', error);
       throw new Error(`ClaudeCode execution failed: ${error}`);
     }
