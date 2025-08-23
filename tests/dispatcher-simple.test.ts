@@ -135,56 +135,7 @@ describe('ClaudeCodeDispatcher - Simple Tests', () => {
       expect(status.polling).toBe(false);
     });
 
-    test('should create proper pull request body', () => {
-      const mockIssue = {
-        id: 1,
-        number: 123,
-        title: 'Test Issue',
-        body: 'Issue description',
-        state: 'open' as const,
-        assignee: { login: 'testuser' },
-        repository: {
-          owner: { login: 'testorg' },
-          name: 'testrepo'
-        },
-        html_url: 'https://github.com/testorg/testrepo/issues/123',
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-01-01T00:00:00Z'
-      };
-
-      const prBody = (dispatcher as any).createPullRequestBody(mockIssue, 'test-branch');
-      
-      expect(prBody).toContain('## 📋 Issue Summary');
-      expect(prBody).toContain('Fixes #123');
-      expect(prBody).toContain('Test Issue');
-      expect(prBody).toContain('Issue description');
-      expect(prBody).toContain('test-branch');
-      expect(prBody).toContain('main');
-      expect(prBody).toContain('🤖 This pull request was automatically generated');
-    });
-
-    test('should handle issue without body in PR', () => {
-      const mockIssue = {
-        id: 1,
-        number: 123,
-        title: 'Test Issue',
-        body: null,
-        state: 'open' as const,
-        assignee: { login: 'testuser' },
-        repository: {
-          owner: { login: 'testorg' },
-          name: 'testrepo'
-        },
-        html_url: 'https://github.com/testorg/testrepo/issues/123',
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-01-01T00:00:00Z'
-      };
-
-      const prBody = (dispatcher as any).createPullRequestBody(mockIssue, 'test-branch');
-      
-      expect(prBody).toContain('## 📋 Issue Summary');
-      expect(prBody).toContain('Fixes #123');
-      expect(prBody).not.toContain('**Description:**');
-    });
+    // PR body creation is now handled by PromptBuilder in the new architecture
+    // These tests are covered in prompt-builder.test.ts
   });
 });
