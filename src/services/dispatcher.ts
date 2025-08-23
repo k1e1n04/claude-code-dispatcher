@@ -1,12 +1,12 @@
-import { GitHubClient } from './github-client';
+import { GitHubClient } from '../clients';
 import { IssueQueue } from './issue-queue';
 import { IssuePoller } from './poller';
 import { IssueProcessor } from './issue-processor';
-import { GitRepository } from './git-repository';
-import { ClaudeCodeExecutor } from './claude-executor';
-import { PromptBuilder } from './prompt-builder';
-import { DispatcherConfig, GitHubIssue } from './types';
-import { logger } from './logger';
+import { GitRepository } from '../infrastructure';
+import { ClaudeCodeExecutor } from '../clients';
+import { PromptBuilder } from '../utils';
+import { DispatcherConfig, GitHubIssue } from '../types';
+import { logger } from '../utils';
 
 /**
  * Central dispatcher for automating GitHub issue processing using Claude Code

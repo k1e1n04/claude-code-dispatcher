@@ -1,6 +1,5 @@
-import { IssuePoller } from '../src/poller';
-import { GitHubClient } from '../src/github-client';
-import { IssueQueue } from '../src/issue-queue';
+import { IssuePoller, IssueQueue } from '../src/services';
+import { GitHubClient } from '../src/clients';
 import { DispatcherConfig, GitHubIssue } from '../src/types';
 
 // Create real instances for simpler testing

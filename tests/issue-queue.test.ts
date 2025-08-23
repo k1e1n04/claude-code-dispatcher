@@ -1,4 +1,4 @@
-import { IssueQueue } from '../src/issue-queue';
+import { IssueQueue } from '../src/services';
 import { GitHubIssue } from '../src/types';
 
 describe('IssueQueue', () => {

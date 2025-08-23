@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
-import { GitHubIssue } from './types';
-import { logger } from './logger';
+import { GitHubIssue } from '../types';
+import { logger } from '../utils';
 
 /**
  * Client for interacting with GitHub API via gh CLI

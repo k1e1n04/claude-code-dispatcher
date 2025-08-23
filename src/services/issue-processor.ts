@@ -1,9 +1,8 @@
-import { GitHubIssue, ProcessingResult } from './types';
-import { logger } from './logger';
-import { RetryHandler } from './logger';
-import { IGitRepository } from './git-repository';
-import { IClaudeCodeExecutor } from './claude-executor';
-import { IPromptBuilder } from './prompt-builder';
+import { GitHubIssue, ProcessingResult } from '../types';
+import { logger, RetryHandler } from '../utils';
+import { IGitRepository } from '../infrastructure';
+import { IClaudeCodeExecutor } from '../clients';
+import { IPromptBuilder } from '../utils';
 
 /**
  * Processes GitHub issues using dependency-injected components

@@ -1,4 +1,4 @@
-import { GitHubIssue } from './types';
+import { GitHubIssue } from '../types';
 
 /**
  * Interface for building different types of prompts for Claude Code

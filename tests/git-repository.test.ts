@@ -1,4 +1,4 @@
-import { GitRepository } from '../src/git-repository';
+import { GitRepository } from '../src/infrastructure';
 import { GitHubIssue } from '../src/types';
 import { execSync } from 'child_process';
 

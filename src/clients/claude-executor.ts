@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { logger } from './logger';
+import { logger } from '../utils';
 
 /**
  * Interface for Claude Code execution

@@ -1,4 +1,4 @@
-import { GitHubClient } from '../src/github-client';
+import { GitHubClient } from '../src/clients';
 import { execSync } from 'child_process';
 
 jest.mock('child_process');

@@ -1,8 +1,7 @@
-import { GitHubClient } from './github-client';
+import { GitHubClient } from '../clients';
 import { IssueQueue } from './issue-queue';
-import { DispatcherConfig } from './types';
-import { logger } from './logger';
-import { RetryHandler } from './logger';
+import { DispatcherConfig } from '../types';
+import { logger, RetryHandler } from '../utils';
 
 export class IssuePoller {
   private isRunning = false;

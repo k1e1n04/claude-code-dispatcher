@@ -1,4 +1,4 @@
-import { PromptBuilder } from '../src/prompt-builder';
+import { PromptBuilder } from '../src/utils';
 import { GitHubIssue } from '../src/types';
 
 describe('PromptBuilder', () => {

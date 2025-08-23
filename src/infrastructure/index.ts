@@ -1,0 +1,1 @@
+export { GitRepository, IGitRepository } from './git-repository';

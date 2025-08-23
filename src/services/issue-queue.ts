@@ -1,5 +1,5 @@
-import { GitHubIssue } from './types';
-import { logger } from './logger';
+import { GitHubIssue } from '../types';
+import { logger } from '../utils';
 
 /**
  * FIFO queue for managing GitHub issues awaiting processing
