@@ -8,5 +8,20 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/cli.ts'
   ],
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  coverageReporters: [
+    'text',
+    'lcov',
+    'html',
+    'json-summary'
+  ],
+  coverageDirectory: 'coverage',
+  coverageThreshold: {
+    global: {
+      branches: 30,
+      functions: 60,
+      lines: 60,
+      statements: 60
+    }
+  }
 };

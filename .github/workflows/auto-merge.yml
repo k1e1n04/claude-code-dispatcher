@@ -1,0 +1,70 @@
+name: Auto Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ develop ]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.draft == false &&
+      (
+        contains(github.event.pull_request.labels.*.name, 'automerge') ||
+        contains(github.event.pull_request.title, '[automerge]')
+      )
+    
+    steps:
+    - name: Check if PR is ready for auto-merge
+      id: check-ready
+      run: |
+        echo "🔍 Checking auto-merge eligibility..."
+        
+        # Check if PR is from dependabot or trusted bots
+        if [[ "${{ github.event.pull_request.user.login }}" == "dependabot[bot]" ]]; then
+          echo "✅ Dependabot PR detected"
+          echo "ready=true" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.event.pull_request.title }}" == *"[automerge]"* ]]; then
+          echo "✅ Auto-merge requested in title"
+          echo "ready=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ PR not eligible for auto-merge"
+          echo "ready=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Wait for checks to complete
+      if: steps.check-ready.outputs.ready == 'true'
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        wait-interval: 30
+        running-workflow-name: 'auto-merge' # Don't wait for this workflow
+        allowed-conclusions: success,skipped
+        verbose: true
+
+    - name: Enable auto-merge
+      if: steps.check-ready.outputs.ready == 'true'
+      uses: peter-evans/enable-pull-request-automerge@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        pull-request-number: ${{ github.event.pull_request.number }}
+        merge-method: squash
+
+    - name: Add auto-merge comment
+      if: steps.check-ready.outputs.ready == 'true'
+      uses: peter-evans/create-or-update-comment@v3
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          🤖 **Auto-merge enabled**
+          
+          This PR will be automatically merged when all checks pass and required reviews are approved.
+          
+          **Merge method:** Squash and merge
+          **Target branch:** `${{ github.event.pull_request.base.ref }}`
+          
+          ---
+          
+          To disable auto-merge, remove the `automerge` label or `[automerge]` from the title.
