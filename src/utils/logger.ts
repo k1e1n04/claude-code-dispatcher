@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { RateLimitError } from '../clients';
 
 export const logger = winston.createLogger({
   level: 'info',
@@ -53,6 +54,13 @@ export class RetryHandler {
         return await operation();
       } catch (error) {
         lastError = error as Error;
+        
+        // If it's a rate limit error, don't retry - let it bubble up
+        if (error instanceof RateLimitError) {
+          logger.info(`${operationName} hit rate limit, bubbling up to dispatcher...`);
+          throw error;
+        }
+        
         // If the operation provided a nonRetryable flag, stop retrying immediately
         if (isNonRetryableError(lastError)) {
           logger.error(

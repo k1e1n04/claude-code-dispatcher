@@ -12,7 +12,9 @@ import packageJson from '../../package.json';
 
 program
   .name('claude-code-dispatcher')
-  .description('CLI tool to integrate ClaudeCode with GitHub for automated issue processing')
+  .description(
+    'CLI tool to integrate ClaudeCode with GitHub for automated issue processing'
+  )
   .version(packageJson.version);
 
 program
@@ -20,27 +22,52 @@ program
   .description('Start the Claude Code dispatcher')
   .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
   .requiredOption('-r, --repo <repo>', 'GitHub repository name')
-  .requiredOption('-a, --assignee <assignee>', 'GitHub username to monitor for assigned issues')
+  .requiredOption(
+    '-a, --assignee <assignee>',
+    'GitHub username to monitor for assigned issues'
+  )
   .option('--allowedTools <tools...>', 'List of allowed tools for Claude Code')
-  .option('--dangerously-skip-permissions', 'Skip permission checks (YOLO mode - use with caution)')
+  .option(
+    '--dangerously-skip-permissions',
+    'Skip permission checks (YOLO mode - use with caution)'
+  )
   .option('-b, --base-branch <branch>', 'Base branch for pull requests', 'main')
   .option('-i, --interval <seconds>', 'Polling interval in seconds', '60')
   .option('--max-retries <count>', 'Maximum retry attempts', '3')
-  .option('-w, --working-dir <path>', 'Working directory for git operations', process.cwd())
-  .option('--disallowedTools <tools...>', 'List of disallowed tools for Claude Code (optional)')
+  .option(
+    '--rate-limit-retry-delay <seconds>',
+    'Delay before retry after Claude rate limit (seconds)',
+    '300'
+  )
+  .option(
+    '-w, --working-dir <path>',
+    'Working directory for git operations',
+    process.cwd()
+  )
+  .option(
+    '--disallowedTools <tools...>',
+    'List of disallowed tools for Claude Code (optional)'
+  )
   .action(async (options) => {
     try {
-
       // Warn user about dangerous mode
       if (options.dangerouslySkipPermissions) {
-        logger.warn('⚠️  YOLO mode enabled: --dangerously-skip-permissions grants full filesystem and shell access');
-        logger.warn('⚠️  This should only be used in safe, non-production environments');
-        
+        logger.warn(
+          '⚠️  YOLO mode enabled: --dangerously-skip-permissions grants full filesystem and shell access'
+        );
+        logger.warn(
+          '⚠️  This should only be used in safe, non-production environments'
+        );
+
         // If both are provided, warn that dangerously-skip-permissions takes precedence
         if (options.allowedTools) {
-          logger.warn('⚠️  Both --allowedTools and --dangerously-skip-permissions provided: YOLO mode takes precedence');
+          logger.warn(
+            '⚠️  Both --allowedTools and --dangerously-skip-permissions provided: YOLO mode takes precedence'
+          );
         }
       }
+
+      const rateLimitRetryDelay = parseInt(options.rateLimitRetryDelay) * 1000;
 
       const config: DispatcherConfig = {
         owner: options.owner,
@@ -51,13 +78,17 @@ program
         maxRetries: parseInt(options.maxRetries),
         allowedTools: options.allowedTools,
         disallowedTools: options.disallowedTools,
-        dangerouslySkipPermissions: options.dangerouslySkipPermissions
+        dangerouslySkipPermissions: options.dangerouslySkipPermissions,
+        rateLimitRetryDelay,
       };
 
-      logger.info('Starting Claude Code Dispatcher with configuration:', config);
-      
+      logger.info(
+        'Starting Claude Code Dispatcher with configuration:',
+        config
+      );
+
       const dispatcher = new ClaudeCodeDispatcher(config, options.workingDir);
-      
+
       process.on('SIGINT', async () => {
         logger.info('Received SIGINT, shutting down gracefully...');
         await dispatcher.stop();
@@ -71,7 +102,6 @@ program
       });
 
       await dispatcher.start();
-      
     } catch (error) {
       logger.error('Failed to start dispatcher:', error);
       process.exit(1);
@@ -83,7 +113,10 @@ program
   .description('Show dispatcher status')
   .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
   .requiredOption('-r, --repo <repo>', 'GitHub repository name')
-  .requiredOption('-a, --assignee <assignee>', 'GitHub username to monitor for assigned issues')
+  .requiredOption(
+    '-a, --assignee <assignee>',
+    'GitHub username to monitor for assigned issues'
+  )
   .action(async (options) => {
     try {
       const config: DispatcherConfig = {
@@ -93,23 +126,28 @@ program
         baseBranch: 'main',
         pollInterval: 60,
         maxRetries: 3,
-        allowedTools: []
+        allowedTools: [],
       };
 
       const dispatcher = new ClaudeCodeDispatcher(config);
       const status = dispatcher.getStatus();
-      
+
       console.log('\n📊 Claude Code Dispatcher Status:');
-      console.log(`├── 🔄 Polling: ${status.polling ? '✅ Active' : '❌ Inactive'}`);
+      console.log(
+        `├── 🔄 Polling: ${status.polling ? '✅ Active' : '❌ Inactive'}`
+      );
       console.log(`├── 📋 Queue Size: ${status.queueSize}`);
-      console.log(`├── ⚙️  Processing: ${status.processing ? '✅ Active' : '❌ Inactive'}`);
-      
+      console.log(
+        `├── ⚙️  Processing: ${status.processing ? '✅ Active' : '❌ Inactive'}`
+      );
+
       if (status.nextIssue) {
-        console.log(`└── 📝 Next Issue: #${status.nextIssue.number} - ${status.nextIssue.title}`);
+        console.log(
+          `└── 📝 Next Issue: #${status.nextIssue.number} - ${status.nextIssue.title}`
+        );
       } else {
         console.log('└── 📝 Next Issue: None');
       }
-      
     } catch (error) {
       logger.error('Failed to get status:', error);
       process.exit(1);
@@ -124,21 +162,26 @@ program
   .action(async (options) => {
     try {
       const { execSync } = await import('child_process');
-      
+
       console.log('🔍 Validating GitHub CLI authentication...');
       execSync('gh auth status', { stdio: 'pipe' });
       console.log('✅ GitHub CLI authentication: OK');
-      
+
       console.log('🔍 Validating repository access...');
-      execSync(`gh repo view ${options.owner}/${options.repo}`, { stdio: 'pipe' });
+      execSync(`gh repo view ${options.owner}/${options.repo}`, {
+        stdio: 'pipe',
+      });
       console.log('✅ Repository access: OK');
-      
+
       console.log('🔍 Testing API rate limit...');
-      const rateLimit = JSON.parse(execSync('gh api rate_limit', { encoding: 'utf8' }));
-      console.log(`✅ API rate limit: ${rateLimit.rate.remaining}/${rateLimit.rate.limit} remaining`);
-      
+      const rateLimit = JSON.parse(
+        execSync('gh api rate_limit', { encoding: 'utf8' })
+      );
+      console.log(
+        `✅ API rate limit: ${rateLimit.rate.remaining}/${rateLimit.rate.limit} remaining`
+      );
+
       console.log('\n🎉 All validations passed! Ready to start dispatcher.');
-      
     } catch (error) {
       console.error('❌ Validation failed:', error);
       console.log('\nPlease ensure:');

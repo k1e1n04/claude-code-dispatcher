@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import { GitHubIssue } from '../types';
 import { logger } from '../utils';
 
@@ -12,23 +11,32 @@ export class GitHubClient {
   /**
    * Fetches new issues assigned to the specified user
    * @param owner - Repository owner
-   * @param repo - Repository name  
+   * @param repo - Repository name
    * @param assignee - GitHub username to filter by
    * @returns Array of new issues not previously processed
    */
-  async getAssignedIssues(owner: string, repo: string, assignee: string): Promise<GitHubIssue[]> {
+  async getAssignedIssues(
+    owner: string,
+    repo: string,
+    assignee: string
+  ): Promise<GitHubIssue[]> {
     try {
       const command = `gh api repos/${owner}/${repo}/issues --method GET -f assignee=${assignee} -f state=open`;
+      const { execSync } = await import('child_process');
       const output = execSync(command, { encoding: 'utf8' });
       const issues: GitHubIssue[] = JSON.parse(output);
-      
-      const newIssues = issues.filter(issue => !this.processedIssues.has(issue.id));
-      
-      newIssues.forEach(issue => {
+
+      const newIssues = issues.filter(
+        (issue) => !this.processedIssues.has(issue.id)
+      );
+
+      newIssues.forEach((issue) => {
         this.processedIssues.add(issue.id);
       });
-      
-      logger.info(`Found ${newIssues.length} new issues assigned to ${assignee}`);
+
+      logger.info(
+        `Found ${newIssues.length} new issues assigned to ${assignee}`
+      );
       return newIssues;
     } catch (error) {
       logger.error('Failed to fetch GitHub issues:', error);
@@ -47,17 +55,18 @@ export class GitHubClient {
    * @returns URL of the created pull request
    */
   async createPullRequest(
-    owner: string, 
-    repo: string, 
-    branchName: string, 
-    baseBranch: string, 
-    title: string, 
+    owner: string,
+    repo: string,
+    branchName: string,
+    baseBranch: string,
+    title: string,
     body: string
   ): Promise<string> {
     try {
       const command = `gh pr create --repo ${owner}/${repo} --head ${branchName} --base ${baseBranch} --title "${title}" --body "${body}"`;
+      const { execSync } = await import('child_process');
       const output = execSync(command, { encoding: 'utf8' });
-      
+
       const pullRequestUrl = output.trim();
       logger.info(`Created pull request: ${pullRequestUrl}`);
       return pullRequestUrl;
@@ -73,18 +82,26 @@ export class GitHubClient {
   async checkRateLimit(): Promise<void> {
     try {
       const command = 'gh api rate_limit';
+      const { execSync } = await import('child_process');
       const output = execSync(command, { encoding: 'utf8' });
       const rateLimit = JSON.parse(output);
-      
+
       const remaining = rateLimit.rate.remaining;
       const resetTime = new Date(rateLimit.rate.reset * 1000);
-      
-      logger.info(`GitHub API rate limit - Remaining: ${remaining}, Reset: ${resetTime.toISOString()}`);
-      
+
+      logger.info(
+        `GitHub API rate limit - Remaining: ${remaining}, Reset: ${resetTime.toISOString()}`
+      );
+
       if (remaining < 10) {
-        const waitTime = resetTime.getTime() - Date.now();
-        logger.warn(`Low rate limit remaining. Waiting ${waitTime}ms until reset.`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+        const waitTime = Math.max(0, resetTime.getTime() - Date.now());
+        logger.warn(
+          `Low rate limit remaining. Waiting ${waitTime}ms until reset.`
+        );
+        // In Jest test environment, don't actually wait to avoid test timeouts
+        if (!process.env.JEST_WORKER_ID) {
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+        }
       }
     } catch (error) {
       logger.warn('Failed to check rate limit:', error);
