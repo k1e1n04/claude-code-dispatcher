@@ -227,122 +227,7 @@ claude-code-dispatcher status \
 
 ## Development
 
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Run in development mode (with explicit tools)
-npm run dev -- start --owner myorg --repo myproject --assignee developer --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
-
-# Run in development mode (YOLO mode for quick testing)
-npm run dev -- start --owner myorg --repo myproject --assignee developer --dangerously-skip-permissions
-
-# Type checking
-npm run typecheck
-
-# Linting
-npm run lint
-```
-
-## Architecture
-
-### System Overview
-
-Claude Code Dispatcher uses a modular architecture with clear separation of concerns:
-
-```mermaid
-flowchart TD
-  subgraph Dispatcher["ClaudeCodeDispatcher(Central Orchestrator)"]
-  end
-
-  Dispatcher --> IssuePoller["IssuePoller(GitHub polling)"]
-  Dispatcher --> IssueQueue["IssueQueue(FIFO queue)"]
-  IssuePoller --> IssueProcessor["IssueProcessor(Issue handling)"]
-
-  IssueProcessor --> GitHubClient["GitHubClient(API interactions)"]
-  IssueProcessor --> ClaudeCodeExecutor["ClaudeCodeExecutor(Code generation)"]
-
-  GitHubClient --> GitHub["GitHub(Issues & PRs)"]
-  ClaudeCodeExecutor --> PromptBuilder["PromptBuilder(Claude prompts)"]
-  PromptBuilder --> GitRepository["GitRepository(Git operations)"]
-```
-
-### Directory Structure
-
-```
-src/
-├── cli.ts                    # Command-line interface entry point
-├── index.ts                  # Main module exports
-├── types.ts                  # Legacy type definitions (being phased out)
-├── clients/                  # External service integrations
-│   ├── claude-executor.ts    # Claude Code command execution
-│   ├── github-client.ts      # GitHub API interactions
-│   └── index.ts              # Client exports
-├── commands/                 # CLI command implementations
-│   └── index.ts              # Command exports
-├── infrastructure/           # Core infrastructure services  
-│   ├── git-repository.ts     # Git operations abstraction
-│   └── index.ts              # Infrastructure exports
-├── services/                 # Business logic services
-│   ├── dispatcher.ts         # Main orchestration service
-│   ├── issue-processor.ts    # Individual issue processing
-│   ├── issue-queue.ts        # FIFO queue management
-│   ├── poller.ts             # GitHub issue polling
-│   └── index.ts              # Service exports
-├── types/                    # Type definitions
-│   └── index.ts              # Centralized type exports
-└── utils/                    # Shared utilities
-    ├── logger.ts             # Logging configuration
-    ├── prompt-builder.ts     # Claude prompt generation
-    └── index.ts              # Utility exports
-```
-
-### Processing Flow
-
-1. **Issue Detection** (`IssuePoller`)
-   - Polls GitHub API for new issues assigned to specified user
-   - Filters out previously processed issues
-   - Adds new issues to the processing queue
-
-2. **Queue Management** (`IssueQueue`) 
-   - Maintains FIFO queue of pending issues
-   - Prevents duplicate processing
-   - Thread-safe operations
-
-3. **Issue Processing** (`IssueProcessor`)
-   - Creates feature branch from base branch
-   - Builds implementation prompt using `PromptBuilder`
-   - Executes Claude Code via `ClaudeCodeExecutor`
-   - Handles git operations through `GitRepository`
-
-4. **Code Generation** (`ClaudeCodeExecutor`)
-   - Executes Claude Code with proper tool permissions
-   - Supports YOLO mode for unrestricted access
-   - Configurable allowed/disallowed tools
-
-5. **Git Operations** (`GitRepository`)
-   - Branch creation and switching
-   - Change detection and committing
-   - Push to remote repository
-
-6. **Pull Request Creation** (`GitHubClient`)
-   - Creates PR with generated description
-   - Links back to original issue
-   - Handles GitHub API interactions
-
-### Key Components
-
-- **ClaudeCodeDispatcher**: Central orchestrator managing the entire workflow
-- **IssuePoller**: Continuously monitors GitHub for new assigned issues  
-- **IssueQueue**: Thread-safe FIFO queue for sequential issue processing
-- **IssueProcessor**: Handles individual issue processing workflow
-- **ClaudeCodeExecutor**: Manages Claude Code execution with configurable permissions
-- **GitHubClient**: Abstracts GitHub API operations (issues, PRs)
-- **GitRepository**: Handles all git operations (branching, commits, pushes)
-- **PromptBuilder**: Generates context-aware prompts for Claude Code
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding standards, and contribution guidelines.
 
 ## Logging
 
@@ -360,11 +245,14 @@ The dispatcher creates comprehensive logs:
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- 🐛 Reporting issues
+- ✨ Submitting features  
+- 🔄 Creating pull requests
+- 💻 Development setup
+- 🎨 Coding standards
+- 🧪 Testing guidelines
 
 ## License
 
