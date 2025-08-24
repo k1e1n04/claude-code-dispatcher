@@ -62,7 +62,7 @@ program
           args.push('--dangerously-skip-permissions');
         }
 
-        const pid = await BackgroundProcessManager.startBackground(args);
+        const pid = await BackgroundProcessManager.startBackground(options.owner, options.repo, args);
         console.log(`✅ Dispatcher started in background (PID: ${pid})`);
         console.log('📝 Use \'claude-code-dispatcher logs\' to view logs');
         console.log('📊 Use \'claude-code-dispatcher status\' to check status');
@@ -119,23 +119,25 @@ program
 
 program
   .command('status')
-  .description('Show dispatcher status (both foreground and background)')
-  .option('-o, --owner <owner>', 'GitHub repository owner (for foreground status)')
-  .option('-r, --repo <repo>', 'GitHub repository name (for foreground status)')
+  .description('Show dispatcher status for specific repository')
+  .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
+  .requiredOption('-r, --repo <repo>', 'GitHub repository name')
   .option('-a, --assignee <assignee>', 'GitHub username to monitor for assigned issues (for foreground status)')
   .action(async (options) => {
     try {
+      // Required options are enforced by commander, so this is just for safety
+
       // Check background process status first
-      const backgroundStatus = await BackgroundProcessManager.getStatus();
+      const backgroundStatus = await BackgroundProcessManager.getStatus(options.owner, options.repo);
       
       console.log('\n📊 Claude Code Dispatcher Status:');
       console.log('');
-      console.log('🔧 Background Process:');
+      console.log(`🔧 Background Process (${options.owner}/${options.repo}):`);
       
       if (backgroundStatus.running) {
         console.log(`├── 🟢 Status: Running (PID: ${backgroundStatus.pid})`);
         console.log(`├── 📁 Log File: ${backgroundStatus.logFile}`);
-        console.log('└── 💡 Use \'claude-code-dispatcher logs\' to view logs');
+        console.log('└── 💡 Use \'claude-code-dispatcher logs -o <owner> -r <repo>\' to view logs');
       } else {
         console.log('└── 🔴 Status: Not running');
       }
@@ -169,8 +171,8 @@ program
       } else if (!backgroundStatus.running) {
         console.log('');
         console.log('💡 Tips:');
-        console.log('  • Use -d/--detach to start in background');
-        console.log('  • Use -o, -r, -a options to check foreground status');
+        console.log(`  • Use 'claude-code-dispatcher start --detach -o ${options.owner} -r ${options.repo} -a <assignee>' to start in background`);
+        console.log('  • Provide -a/--assignee option to also check foreground status');
       }
       
     } catch (error) {
@@ -214,18 +216,20 @@ program
 
 program
   .command('stop')
-  .description('Stop the background dispatcher process')
-  .action(async () => {
+  .description('Stop the background dispatcher process for specific repository')
+  .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
+  .requiredOption('-r, --repo <repo>', 'GitHub repository name')
+  .action(async (options) => {
     try {
-      const status = await BackgroundProcessManager.getStatus();
+      const status = await BackgroundProcessManager.getStatus(options.owner, options.repo);
       
       if (!status.running) {
-        console.log('❌ No background dispatcher process is running');
+        console.log(`❌ No background dispatcher process is running for ${options.owner}/${options.repo}`);
         return;
       }
       
-      console.log(`🛑 Stopping background dispatcher (PID: ${status.pid})...`);
-      await BackgroundProcessManager.stop();
+      console.log(`🛑 Stopping background dispatcher for ${options.owner}/${options.repo} (PID: ${status.pid})...`);
+      await BackgroundProcessManager.stop(options.owner, options.repo);
       console.log('✅ Background dispatcher stopped');
       
     } catch (error) {
@@ -236,24 +240,26 @@ program
 
 program
   .command('logs')
-  .description('Show logs from the background dispatcher')
+  .description('Show logs from the background dispatcher for specific repository')
+  .requiredOption('-o, --owner <owner>', 'GitHub repository owner')
+  .requiredOption('-r, --repo <repo>', 'GitHub repository name')
   .option('-n, --lines <count>', 'Number of log lines to show', '50')
   .option('-f, --follow', 'Follow log output (tail -f style)')
   .action(async (options) => {
     try {
-      const status = await BackgroundProcessManager.getStatus();
+      const status = await BackgroundProcessManager.getStatus(options.owner, options.repo);
       
       if (options.follow) {
         if (!status.running) {
-          console.log('❌ No background dispatcher process is running');
+          console.log(`❌ No background dispatcher process is running for ${options.owner}/${options.repo}`);
           return;
         }
         
-        console.log(`📝 Following logs from background dispatcher (PID: ${status.pid})...`);
+        console.log(`📝 Following logs from background dispatcher for ${options.owner}/${options.repo} (PID: ${status.pid})...`);
         console.log('Press Ctrl+C to stop following logs');
         
         // Start with recent logs
-        const recentLogs = await BackgroundProcessManager.getLogs(parseInt(options.lines));
+        const recentLogs = await BackgroundProcessManager.getLogs(options.owner, options.repo, parseInt(options.lines));
         recentLogs.forEach(line => console.log(line));
         
         // Follow new logs by polling the log file
@@ -295,11 +301,11 @@ program
         
       } else {
         // Show recent logs
-        console.log('📝 Recent logs from background dispatcher:');
+        console.log(`📝 Recent logs from background dispatcher for ${options.owner}/${options.repo}:`);
         console.log(`📁 Log file: ${status.logFile}`);
         console.log('─'.repeat(80));
         
-        const logs = await BackgroundProcessManager.getLogs(parseInt(options.lines));
+        const logs = await BackgroundProcessManager.getLogs(options.owner, options.repo, parseInt(options.lines));
         logs.forEach(line => console.log(line));
         
         if (logs.length === 1 && logs[0] === 'No logs found') {
