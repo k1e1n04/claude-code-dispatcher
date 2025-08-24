@@ -240,35 +240,6 @@ refactor(queue): extract issue queue to separate class
 test(processor): add unit tests for error handling
 ```
 
-## 🔧 Tool Permissions & Security
-
-When contributing features that involve Claude Code execution:
-
-### Recommended Tool Sets
-
-**For basic code changes:**
-```bash
---allowedTools "Edit" "Write" "Read" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)"
-```
-
-**For full automation:**
-```bash
---allowedTools "Edit" "Write" "Read" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
-```
-
-### Security Guidelines
-
-- **Never use YOLO mode** (`--dangerously-skip-permissions`) in production code
-- **Always use specific patterns** (e.g., `"Bash(npm run build:*)"` instead of `"Bash"`)
-- **Explicitly disallow dangerous operations** with `--disallowedTools`
-- **Review tool permissions** regularly based on repository needs
-
-### Required Permissions for Automation
-
-- `"Bash(git add:*)"` - Required for staging changes made by Claude Code
-- `"Bash(git commit:*)"` - Required for committing changes to the repository  
-- `"Bash(git push:*)"` - Required for pushing branches to remote repository
-- `"Bash(gh pr create:*)"` - Required for creating pull requests via GitHub CLI
 
 ## 📊 Quality Gates
 
@@ -367,14 +338,8 @@ LOG_LEVEL=debug npm run dev -- start --owner myorg --repo myproject
 ### Getting Help
 
 - **GitHub Issues**: For bug reports and feature requests
-- **GitHub Discussions**: For questions and general discussion
 - **Pull Request Reviews**: For code-specific questions
 
-### Response Times
-
-- **Bug reports**: We aim to respond within 48 hours
-- **Feature requests**: We aim to respond within 1 week
-- **Pull requests**: We aim to review within 1 week
 
 ## 🎉 Recognition
 
