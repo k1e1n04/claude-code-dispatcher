@@ -1,7 +1,7 @@
-import { ClaudeCodeExecutor, RateLimitError } from "../src/clients";
-import { execSync } from "child_process";
+import { ClaudeCodeExecutor, RateLimitError } from '../src/clients';
+import { execSync } from 'child_process';
 
-jest.mock("child_process");
+jest.mock('child_process');
 const mockExecSync = execSync as jest.MockedFunction<typeof execSync>;
 
 interface ExecutorTestHooks {
@@ -9,78 +9,78 @@ interface ExecutorTestHooks {
   rateLimitRetryDelay: number;
 }
 
-describe("ClaudeCodeExecutor", () => {
+describe('ClaudeCodeExecutor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe("command building", () => {
-    test("should build basic command with no permissions", () => {
+  describe('command building', () => {
+    test('should build basic command with no permissions', () => {
       const executor = new ClaudeCodeExecutor();
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
-      expect(command).toBe("claude code --print");
+      expect(command).toBe('claude code --print');
     });
 
-    test("should build command with allowed tools", () => {
+    test('should build command with allowed tools', () => {
       const executor = new ClaudeCodeExecutor({
-        allowedTools: ["Edit", "Write", "Bash(git add:*)"],
+        allowedTools: ['Edit', 'Write', 'Bash(git add:*)'],
       });
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
       expect(command).toBe(
-        "claude code --print --allowedTools 'Edit' 'Write' 'Bash(git add:*)'"
+        'claude code --print --allowedTools "Edit" "Write" "Bash(git add:*)"'
       );
     });
 
-    test("should build command with disallowed tools", () => {
+    test('should build command with disallowed tools', () => {
       const executor = new ClaudeCodeExecutor({
-        disallowedTools: ["WebFetch", "Bash(rm:*)"],
+        disallowedTools: ['WebFetch', 'Bash(rm:*)'],
       });
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
       expect(command).toBe(
-        "claude code --print --disallowedTools 'WebFetch' 'Bash(rm:*)'"
+        'claude code --print --disallowedTools "WebFetch" "Bash(rm:*)"'
       );
     });
 
-    test("should build command with dangerously-skip-permissions", () => {
+    test('should build command with dangerously-skip-permissions', () => {
       const executor = new ClaudeCodeExecutor({
         dangerouslySkipPermissions: true,
       });
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
       expect(command).toBe(
-        "claude code --print --dangerously-skip-permissions"
+        'claude code --print --dangerously-skip-permissions'
       );
     });
 
-    test("should prioritize dangerously-skip-permissions over allowed tools", () => {
+    test('should prioritize dangerously-skip-permissions over allowed tools', () => {
       const executor = new ClaudeCodeExecutor({
-        allowedTools: ["Edit", "Write"],
+        allowedTools: ['Edit', 'Write'],
         dangerouslySkipPermissions: true,
       });
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
       expect(command).toBe(
-        "claude code --print --dangerously-skip-permissions"
+        'claude code --print --dangerously-skip-permissions'
       );
     });
 
-    test("should include disallowed tools even with dangerously-skip-permissions", () => {
+    test('should include disallowed tools even with dangerously-skip-permissions', () => {
       const executor = new ClaudeCodeExecutor({
-        allowedTools: ["Edit"],
-        disallowedTools: ["WebFetch"],
+        allowedTools: ['Edit'],
+        disallowedTools: ['WebFetch'],
         dangerouslySkipPermissions: true,
       });
       const hooks = executor as unknown as ExecutorTestHooks;
       const command = hooks.buildClaudeCommand();
       expect(command).toBe(
-        "claude code --print --dangerously-skip-permissions --disallowedTools 'WebFetch'"
+        'claude code --print --dangerously-skip-permissions --disallowedTools "WebFetch"'
       );
     });
 
-    test("should accept rateLimitRetryDelay configuration", () => {
+    test('should accept rateLimitRetryDelay configuration', () => {
       const executor = new ClaudeCodeExecutor({
         rateLimitRetryDelay: 10 * 60 * 1000, // 10 minutes
       });
@@ -89,75 +89,75 @@ describe("ClaudeCodeExecutor", () => {
     });
   });
 
-  describe("execution", () => {
-    test("should execute claude command successfully", async () => {
+  describe('execution', () => {
+    test('should execute claude command successfully', async () => {
       const executor = new ClaudeCodeExecutor({
-        workingDirectory: "/test/workspace",
-        allowedTools: ["Edit", "Write"],
+        workingDirectory: '/test/workspace',
+        allowedTools: ['Edit', 'Write'],
       });
 
       mockExecSync.mockReturnValue(
-        "Claude execution completed successfully" as unknown as Buffer
+        'Claude execution completed successfully' as unknown as Buffer
       );
 
-      await expect(executor.execute("Test prompt")).resolves.toBeUndefined();
+      await expect(executor.execute('Test prompt')).resolves.toBeUndefined();
 
       expect(mockExecSync).toHaveBeenCalledWith(
-        "claude code --print --allowedTools 'Edit' 'Write'",
+        'claude code --print --allowedTools "Edit" "Write"',
         {
-          cwd: "/test/workspace",
-          input: "Test prompt",
-          encoding: "utf8",
-          stdio: ["pipe", "pipe", "inherit"],
+          cwd: '/test/workspace',
+          input: 'Test prompt',
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'inherit'],
           timeout: 300000,
         }
       );
     });
 
-    test("should handle rate limit errors as RateLimitError", async () => {
+    test('should handle rate limit errors as RateLimitError', async () => {
       const executor = new ClaudeCodeExecutor();
       mockExecSync.mockReturnValue(
-        "5-hour limit reached ∙ resets 2am" as unknown as Buffer
+        '5-hour limit reached ∙ resets 2am' as unknown as Buffer
       );
 
-      await expect(executor.execute("Test prompt")).rejects.toBeInstanceOf(
+      await expect(executor.execute('Test prompt')).rejects.toBeInstanceOf(
         RateLimitError
       );
 
-      await expect(executor.execute("Test prompt")).rejects.toMatchObject({
-        message: expect.stringContaining("5-hour limit reached"),
+      await expect(executor.execute('Test prompt')).rejects.toMatchObject({
+        message: expect.stringContaining('5-hour limit reached'),
         isRateLimit: true,
       });
     });
 
-    test("should handle general execution errors", async () => {
+    test('should handle general execution errors', async () => {
       const executor = new ClaudeCodeExecutor();
       mockExecSync.mockImplementation(() => {
-        throw new Error("Command failed");
+        throw new Error('Command failed');
       });
 
-      await expect(executor.execute("Test prompt")).rejects.toThrow(
-        "ClaudeCode execution failed: Error: Command failed"
+      await expect(executor.execute('Test prompt')).rejects.toThrow(
+        'ClaudeCode execution failed: Error: Command failed'
       );
     });
 
-    test("should handle quota limit in error stdout", async () => {
+    test('should handle quota limit in error stdout', async () => {
       const executor = new ClaudeCodeExecutor();
-      const error = new Error("Command failed") as unknown as {
+      const error = new Error('Command failed') as unknown as {
         stdout?: string;
       };
-      error.stdout = "quota reached";
+      error.stdout = 'quota reached';
 
       mockExecSync.mockImplementation(() => {
         throw error;
       });
 
-      await expect(executor.execute("Test prompt")).rejects.toBeInstanceOf(
+      await expect(executor.execute('Test prompt')).rejects.toBeInstanceOf(
         RateLimitError
       );
 
-      await expect(executor.execute("Test prompt")).rejects.toMatchObject({
-        message: expect.stringContaining("Daily quota reached"),
+      await expect(executor.execute('Test prompt')).rejects.toMatchObject({
+        message: expect.stringContaining('Daily quota reached'),
         isRateLimit: true,
       });
     });

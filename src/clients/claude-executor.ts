@@ -102,18 +102,18 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     // Use dangerously-skip-permissions if enabled
     if (this.dangerouslySkipPermissions) {
       command += ' --dangerously-skip-permissions';
-    } else if (this.allowedTools.length > 0) {
+  } else if (this.allowedTools.length > 0) {
       // Add allowed tools only if not in dangerous mode
       const allowedToolsArgs = this.allowedTools
-        .map((tool) => `'${tool}'`)
+    .map((tool) => `"${tool}"`)
         .join(' ');
       command += ` --allowedTools ${allowedToolsArgs}`;
     }
 
     // Add disallowed tools if specified (works with both modes)
-    if (this.disallowedTools && this.disallowedTools.length > 0) {
+  if (this.disallowedTools && this.disallowedTools.length > 0) {
       const disallowedToolsArgs = this.disallowedTools
-        .map((tool) => `'${tool}'`)
+    .map((tool) => `"${tool}"`)
         .join(' ');
       command += ` --disallowedTools ${disallowedToolsArgs}`;
     }
