@@ -20,6 +20,7 @@ With a locally running dispatcher, you can fully leverage a subscription-based C
 - ⚡ **Configurable Polling**: Adjustable polling intervals (default: 60 seconds)
 - 🛡️ **Error Handling**: Built-in retry mechanisms and comprehensive logging
 - 📊 **Status Monitoring**: Real-time status checking capabilities
+- 🔧 **Background Execution**: Run dispatcher in background with `-d/--detach` option
 
 ## Prerequisites
 
@@ -40,6 +41,7 @@ npm install -g claude-code-dispatcher
 
 ### Start the Dispatcher
 
+#### Foreground Mode (Default)
 ```bash
 # With explicit tool permissions (recommended for production)
 claude-code-dispatcher start \
@@ -68,13 +70,59 @@ claude-code-dispatcher start \
   --interval 60
 ```
 
-### Check Status
+#### Background Mode (Detached)
+Run the dispatcher in the background, freeing up your terminal for other work:
 
 ```bash
+# Start in background with detach flag
+claude-code-dispatcher start \
+  --owner <github-owner> \
+  --repo <repository-name> \
+  --assignee <github-username> \
+  --detach \
+  --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
+
+# Short form with -d
+claude-code-dispatcher start \
+  -o <github-owner> \
+  -r <repository-name> \
+  -a <github-username> \
+  -d \
+  --dangerously-skip-permissions
+```
+
+### Background Process Management
+
+When running in background mode, use these commands to manage the dispatcher:
+
+#### Check Status
+```bash
+# Check both foreground and background process status
+claude-code-dispatcher status
+
+# Check foreground status with specific repository
 claude-code-dispatcher status \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username>
+```
+
+#### View Logs
+```bash
+# Show recent logs from background dispatcher
+claude-code-dispatcher logs
+
+# Show specific number of log lines
+claude-code-dispatcher logs --lines 100
+
+# Follow logs in real-time (like tail -f)
+claude-code-dispatcher logs --follow
+```
+
+#### Stop Background Process
+```bash
+# Stop the background dispatcher
+claude-code-dispatcher stop
 ```
 
 ### Validate Prerequisites
@@ -92,6 +140,7 @@ claude-code-dispatcher validate \
 | `--owner` | `-o` | GitHub repository owner | Required |
 | `--repo` | `-r` | GitHub repository name | Required |
 | `--assignee` | `-a` | GitHub username to monitor | Required |
+| `--detach` | `-d` | Run dispatcher in background | Optional |
 | `--allowedTools` | | List of allowed tools for Claude Code | Optional |
 | `--dangerously-skip-permissions` | | Skip permission checks (YOLO mode) | Optional |
 | `--disallowedTools` | | List of disallowed tools for Claude Code | Optional |
@@ -191,29 +240,39 @@ claude-code-dispatcher start \
 ### Basic Usage
 
 ```bash
-# Start monitoring issues for user 'developer' in 'myorg/myproject' (production-safe)
+# Start monitoring in foreground (production-safe)
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
   --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
 
-# Quick experimentation with YOLO mode (⚠️ use with caution)
+# Start monitoring in background (recommended for continuous operation)
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
+  --detach \
+  --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
+
+# Quick experimentation with YOLO mode in background (⚠️ use with caution)
+claude-code-dispatcher start \
+  --owner myorg \
+  --repo myproject \
+  --assignee developer \
+  --detach \
   --dangerously-skip-permissions
 ```
 
 ### Custom Configuration
 
 ```bash
-# Poll every 30 seconds with custom base branch and tool restrictions
+# Poll every 30 seconds with custom base branch and tool restrictions (background)
 claude-code-dispatcher start \
   --owner myorg \
   --repo myproject \
   --assignee developer \
+  --detach \
   --allowedTools "Edit" "Write" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)" \
   --disallowedTools "WebFetch" "Bash(rm:*)" \
   --base-branch develop \
@@ -221,9 +280,22 @@ claude-code-dispatcher start \
   --max-retries 5
 ```
 
-### Status Check
+### Background Process Management
 
 ```bash
+# Check status of background process
+claude-code-dispatcher status
+
+# View recent logs
+claude-code-dispatcher logs
+
+# Follow logs in real-time
+claude-code-dispatcher logs --follow
+
+# Stop background process
+claude-code-dispatcher stop
+
+# Check foreground status with specific repository
 claude-code-dispatcher status \
   --owner myorg \
   --repo myproject \
@@ -236,10 +308,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding st
 
 ## Logging
 
+### Foreground Mode
 The dispatcher creates comprehensive logs:
 - `combined.log`: All log messages
 - `error.log`: Error messages only
 - Console output with colored formatting
+
+### Background Mode
+When running in background (`--detach`), logs are managed differently:
+- Logs are written to `/tmp/claude-code-dispatcher.log`
+- Use `claude-code-dispatcher logs` to view recent logs
+- Use `claude-code-dispatcher logs --follow` to monitor logs in real-time
+- Use `claude-code-dispatcher logs --lines N` to show specific number of lines
 
 ## Error Handling
 
