@@ -290,6 +290,25 @@ All contributions must pass the following quality gates:
 
 ## 🏗️ Project Architecture
 
+
+```mermaid
+flowchart TD
+  subgraph Dispatcher["ClaudeCodeDispatcher(Central Orchestrator)"]
+  end
+
+  Dispatcher --> IssuePoller["IssuePoller(GitHub polling)"]
+  Dispatcher --> IssueQueue["IssueQueue(FIFO queue)"]
+  IssuePoller --> IssueProcessor["IssueProcessor(Issue handling)"]
+
+  IssueProcessor --> GitHubClient["GitHubClient(API interactions)"]
+  IssueProcessor --> ClaudeCodeExecutor["ClaudeCodeExecutor(Code generation)"]
+
+  GitHubClient --> GitHub["GitHub(Issues & PRs)"]
+  ClaudeCodeExecutor --> PromptBuilder["PromptBuilder(Claude prompts)"]
+  PromptBuilder --> GitRepository["GitRepository(Git operations)"]
+```
+
+
 ### Directory Structure
 
 ```

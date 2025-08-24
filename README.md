@@ -229,27 +229,6 @@ claude-code-dispatcher status \
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding standards, and contribution guidelines.
 
-## Architecture
-
-Claude Code Dispatcher uses a modular architecture with clear separation of concerns. For detailed architecture information, see [CONTRIBUTING.md](CONTRIBUTING.md#-project-architecture).
-
-```mermaid
-flowchart TD
-  subgraph Dispatcher["ClaudeCodeDispatcher(Central Orchestrator)"]
-  end
-
-  Dispatcher --> IssuePoller["IssuePoller(GitHub polling)"]
-  Dispatcher --> IssueQueue["IssueQueue(FIFO queue)"]
-  IssuePoller --> IssueProcessor["IssueProcessor(Issue handling)"]
-
-  IssueProcessor --> GitHubClient["GitHubClient(API interactions)"]
-  IssueProcessor --> ClaudeCodeExecutor["ClaudeCodeExecutor(Code generation)"]
-
-  GitHubClient --> GitHub["GitHub(Issues & PRs)"]
-  ClaudeCodeExecutor --> PromptBuilder["PromptBuilder(Claude prompts)"]
-  PromptBuilder --> GitRepository["GitRepository(Git operations)"]
-```
-
 ## Logging
 
 The dispatcher creates comprehensive logs:
