@@ -8,12 +8,12 @@ import { logger } from '../utils';
 const program = new Command();
 
 // Import version from package.json
-const { version } = require('../../package.json');
+import packageJson from '../../package.json';
 
 program
   .name('claude-code-dispatcher')
   .description('CLI tool to integrate ClaudeCode with GitHub for automated issue processing')
-  .version(version);
+  .version(packageJson.version);
 
 program
   .command('start')
