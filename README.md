@@ -1,10 +1,12 @@
 # Claude Code Dispatcher
 
-A CLI tool to integrate ClaudeCode with GitHub for automated issue processing.
+A local-first CLI tool that integrates Claude Code with GitHub for automated issue processing. Unlike GitHub Actions or Copilot Coding Agent, claude-code-dispatcher runs locally in your development environment, leveraging Claude Code to directly generate branches and PRs with full access to your local toolchain, dependencies, and devcontainer setup.
 
 ## Overview
 
 Claude Code Dispatcher monitors GitHub issues assigned to a specific user, processes them using ClaudeCode, and automatically creates pull requests with the generated solutions.
+
+**Why this project?** By running locally rather than in the cloud, claude-code-dispatcher provides Claude Code with direct access to your actual development environment. This means more accurate code generation that respects your local setup, toolchain configurations, and dependency versions—something cloud-based automation tools cannot achieve.
 
 ## Features
 

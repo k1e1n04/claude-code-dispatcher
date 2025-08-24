@@ -1,7 +1,7 @@
 {
   "name": "claude-code-dispatcher",
   "version": "0.1.3",
-  "description": "CLI tool to integrate ClaudeCode with GitHub for automated issue processing",
+  "description": "Local-first CLI tool that integrates Claude Code with GitHub for automated issue processing, running in your dev environment with full toolchain access",
   "main": "dist/index.js",
   "bin": {
     "claude-code-dispatcher": "./bin/claude-code-dispatcher"
