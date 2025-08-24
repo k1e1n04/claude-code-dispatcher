@@ -1,4 +1,4 @@
-import { ClaudeCodeExecutor } from '../src/clients';
+import { ClaudeCodeExecutor, RateLimitError } from '../src/clients';
 import { execSync } from 'child_process';
 
 jest.mock('child_process');
@@ -65,6 +65,14 @@ describe('ClaudeCodeExecutor', () => {
       const command = (executor as any).buildClaudeCommand();
       expect(command).toBe('claude code --print --dangerously-skip-permissions --disallowedTools "WebFetch"');
     });
+
+    test('should accept rateLimitRetryDelay configuration', () => {
+      const executor = new ClaudeCodeExecutor({
+        rateLimitRetryDelay: 10 * 60 * 1000 // 10 minutes
+      });
+      
+      expect((executor as any).rateLimitRetryDelay).toBe(10 * 60 * 1000);
+    });
   });
 
   describe('execution', () => {
@@ -74,9 +82,9 @@ describe('ClaudeCodeExecutor', () => {
         allowedTools: ['Edit', 'Write']
       });
 
-      mockExecSync.mockReturnValue('Claude execution completed successfully');
+      mockExecSync.mockReturnValue('Claude execution completed successfully' as any);
 
-      await executor.execute('Test prompt');
+      await expect(executor.execute('Test prompt')).resolves.toBeUndefined();
 
       expect(mockExecSync).toHaveBeenCalledWith(
         'claude code --print --allowedTools "Edit" "Write"',
@@ -90,14 +98,17 @@ describe('ClaudeCodeExecutor', () => {
       );
     });
 
-    test('should handle rate limit errors as non-retryable', async () => {
+    test('should handle rate limit errors as RateLimitError', async () => {
       const executor = new ClaudeCodeExecutor();
-      mockExecSync.mockReturnValue('Rate limit reached. Please try again later.');
+      mockExecSync.mockReturnValue('5-hour limit reached ∙ resets 2am' as any);
+
+      await expect(executor.execute('Test prompt'))
+        .rejects.toBeInstanceOf(RateLimitError);
 
       await expect(executor.execute('Test prompt'))
         .rejects.toMatchObject({
-          message: expect.stringContaining('rate limit/quota reached'),
-          nonRetryable: true
+          message: expect.stringContaining('5-hour limit reached'),
+          isRateLimit: true
         });
     });
 
@@ -111,19 +122,23 @@ describe('ClaudeCodeExecutor', () => {
         .rejects.toThrow('ClaudeCode execution failed: Error: Command failed');
     });
 
-    test('should handle rate limit in error stdout', async () => {
+    test('should handle quota limit in error stdout', async () => {
       const executor = new ClaudeCodeExecutor();
       const error = new Error('Command failed') as any;
-      error.stdout = 'quota exceeded';
+      error.stdout = 'quota reached';
       
       mockExecSync.mockImplementation(() => {
         throw error;
       });
 
       await expect(executor.execute('Test prompt'))
+        .rejects.toBeInstanceOf(RateLimitError);
+
+      await expect(executor.execute('Test prompt'))
         .rejects.toMatchObject({
-          message: expect.stringContaining('ClaudeCode execution failed'),
-          nonRetryable: true
+          message: expect.stringContaining('Daily quota reached'),
+          isRateLimit: true,
+          quotaResetTime: expect.any(Date)
         });
     });
   });

@@ -1,7 +1,7 @@
 import { GitHubIssue, ProcessingResult } from '../types';
 import { logger, RetryHandler } from '../utils';
 import { IGitRepository } from '../infrastructure';
-import { IClaudeCodeExecutor } from '../clients';
+import { IClaudeCodeExecutor, RateLimitError } from '../clients';
 import { IPromptBuilder } from '../utils';
 
 /**
@@ -74,6 +74,11 @@ export class IssueProcessor {
       };
       
     } catch (error) {
+      // Let RateLimitError bubble up to be handled by dispatcher
+      if (error instanceof RateLimitError) {
+        throw error;
+      }
+      
       logger.error(`Failed to process issue #${issue.number}:`, error);
       return {
         success: false,

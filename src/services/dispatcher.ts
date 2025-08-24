@@ -3,7 +3,7 @@ import { IssueQueue } from './issue-queue';
 import { IssuePoller } from './poller';
 import { IssueProcessor } from './issue-processor';
 import { GitRepository } from '../infrastructure';
-import { ClaudeCodeExecutor } from '../clients';
+import { ClaudeCodeExecutor, RateLimitError } from '../clients';
 import { PromptBuilder } from '../utils';
 import { DispatcherConfig, GitHubIssue } from '../types';
 import { logger } from '../utils';
@@ -75,7 +75,8 @@ export class ClaudeCodeDispatcher {
       workingDirectory,
       allowedTools: config.allowedTools,
       disallowedTools: config.disallowedTools,
-      dangerouslySkipPermissions: config.dangerouslySkipPermissions
+      dangerouslySkipPermissions: config.dangerouslySkipPermissions,
+      rateLimitRetryDelay: config.rateLimitRetryDelay
     });
     const promptBuilder = new PromptBuilder();
     
@@ -217,10 +218,16 @@ export class ClaudeCodeDispatcher {
 
       try {
         if (!this.issueQueue.isEmpty() && !this.issueQueue.isProcessing()) {
-          const issue = this.issueQueue.dequeue();
+          const issue = this.issueQueue.peek(); // Peek instead of dequeue
           
           if (issue) {
-            await this.processIssue(issue);
+            const success = await this.processIssue(issue);
+            
+            // Only remove from queue if processing was successful
+            if (success) {
+              this.issueQueue.dequeue(); // Remove the issue we just processed
+            }
+            // If failed due to rate limit, issue stays in queue for retry
           }
         }
       } catch (error) {
@@ -246,8 +253,9 @@ export class ClaudeCodeDispatcher {
    * 
    * @private
    * @param issue - The GitHub issue to process
+   * @returns true if processing succeeded, false if rate limited
    */
-  private async processIssue(issue: GitHubIssue): Promise<void> {
+  private async processIssue(issue: GitHubIssue): Promise<boolean> {
     this.issueQueue.setProcessing(true);
     
     try {
@@ -257,17 +265,54 @@ export class ClaudeCodeDispatcher {
       
       if (result.success && result.branchName) {
         logger.info(`Successfully created pull request for issue #${issue.number}`);
+        return true; // Success - issue should be removed from queue
       } else {
         logger.error(`Failed to process issue #${issue.number}: ${result.error}`);
         this.githubClient.markIssueAsProcessed(issue.id);
+        return true; // Regular failure - issue should be removed from queue
       }
       
     } catch (error) {
+      // Check if it's a rate limit error
+      if (error instanceof RateLimitError) {
+        return await this.handleRateLimit(error, issue);
+      }
+      
       logger.error(`Unexpected error processing issue #${issue.number}:`, error);
       this.githubClient.markIssueAsProcessed(issue.id);
+      return true; // Regular error - issue should be removed from queue
+      
     } finally {
       this.issueQueue.setProcessing(false);
     }
+  }
+
+  /**
+   * Handles rate limit errors by pausing and retrying
+   * @private
+   * @param error - The rate limit error
+   * @param issue - The issue that was being processed
+   * @returns false to indicate issue should stay in queue
+   */
+  private async handleRateLimit(error: RateLimitError, issue: GitHubIssue): Promise<boolean> {
+    const rateLimitRetryDelay = this.config.rateLimitRetryDelay || 5 * 60 * 1000;
+    
+    if (error.quotaResetTime) {
+      // Daily quota limit - wait until reset time
+      const waitTime = error.quotaResetTime.getTime() - Date.now();
+      logger.warn(`Claude Code daily quota reached. Pausing until next reset (${error.quotaResetTime.toISOString()})...`);
+      
+      if (waitTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, Math.min(waitTime, 60 * 60 * 1000))); // Wait max 1 hour at a time
+      }
+    } else {
+      // 5-hour rate limit - wait configured delay
+      logger.warn(`Claude Code rate limited. Pausing for ${rateLimitRetryDelay / 60000} minutes before retry...`);
+      await new Promise(resolve => setTimeout(resolve, rateLimitRetryDelay));
+    }
+    
+    logger.info(`Rate limit pause completed, will retry issue #${issue.number}...`);
+    return false; // Issue should stay in queue for retry
   }
 
 
@@ -287,7 +332,13 @@ export class ClaudeCodeDispatcher {
       }
       
       const status = this.getStatus();
-      logger.info(`Status - Queue: ${status.queueSize}, Processing: ${status.processing ? 'Yes' : 'No'}, Polling: ${status.polling ? 'Yes' : 'No'}`);
+      const processingStatus = status.processing ? 'Yes' : 'No';
+      
+      logger.info(`Status - Queue: ${status.queueSize}, Processing: ${processingStatus}, Polling: ${status.polling ? 'Yes' : 'No'}`);
+      
+      if (status.nextIssue && !status.processing && status.queueSize > 0) {
+        logger.info(`Next issue in queue: #${status.nextIssue.number} - ${status.nextIssue.title}`);
+      }
     }, 30000);
   }
 
