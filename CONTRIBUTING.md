@@ -319,7 +319,6 @@ LOG_LEVEL=debug npm run dev -- start --owner myorg --repo myproject
 ### Getting Help
 
 - **GitHub Issues**: For bug reports and feature requests
-- **GitHub Discussions**: For questions and general discussion
 - **Pull Request Reviews**: For code-specific questions
 
 
