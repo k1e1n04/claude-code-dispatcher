@@ -5,12 +5,9 @@ import { logger } from '../utils';
  */
 export class RateLimitError extends Error {
   public readonly isRateLimit = true;
-  public readonly quotaResetTime?: Date;
-
-  constructor(message: string, quotaResetTime?: Date) {
+  constructor(message: string) {
     super(message);
     this.name = 'RateLimitError';
-    this.quotaResetTime = quotaResetTime;
   }
 }
 
@@ -40,7 +37,8 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
   private allowedTools: string[];
   private disallowedTools: string[];
   private dangerouslySkipPermissions: boolean;
-  private rateLimitRetryDelay: number;
+  // Exposed for test visibility only; dispatcher performs the waiting
+  public rateLimitRetryDelay: number | undefined;
 
   constructor(config: ClaudeExecutorConfig = {}) {
     this.workingDirectory = config.workingDirectory || process.cwd();
@@ -48,7 +46,7 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     this.disallowedTools = config.disallowedTools || [];
     this.dangerouslySkipPermissions =
       config.dangerouslySkipPermissions || false;
-    this.rateLimitRetryDelay = config.rateLimitRetryDelay || 5 * 60 * 1000; // Default: 5 minutes
+    this.rateLimitRetryDelay = config.rateLimitRetryDelay;
   }
 
   /**
@@ -79,10 +77,8 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
       }
 
       if (this.isQuotaLimited(new Error(''), output)) {
-        const resetTime = new Date(Date.now() + this.getQuotaResetDelay());
         throw new RateLimitError(
-          `Daily quota reached: ${output.trim().split('\n')[0]}`,
-          resetTime
+          `Daily quota reached: ${output.trim().split('\n')[0]}`
         );
       }
 
@@ -109,7 +105,7 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     } else if (this.allowedTools.length > 0) {
       // Add allowed tools only if not in dangerous mode
       const allowedToolsArgs = this.allowedTools
-        .map((tool) => `"${tool}"`)
+        .map((tool) => `'${tool}'`)
         .join(' ');
       command += ` --allowedTools ${allowedToolsArgs}`;
     }
@@ -117,7 +113,7 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     // Add disallowed tools if specified (works with both modes)
     if (this.disallowedTools && this.disallowedTools.length > 0) {
       const disallowedToolsArgs = this.disallowedTools
-        .map((tool) => `"${tool}"`)
+        .map((tool) => `'${tool}'`)
         .join(' ');
       command += ` --disallowedTools ${disallowedToolsArgs}`;
     }
@@ -162,20 +158,6 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
   }
 
   /**
-   * Calculates time until next quota reset (midnight UTC)
-   * @returns milliseconds until reset
-   */
-  private getQuotaResetDelay(): number {
-    const now = new Date();
-    const nextReset = new Date();
-    nextReset.setUTCHours(0, 0, 0, 0); // midnight UTC
-    if (nextReset <= now) {
-      nextReset.setUTCDate(nextReset.getUTCDate() + 1);
-    }
-    return nextReset.getTime() - now.getTime();
-  }
-
-  /**
    * Handles execution errors with proper rate limit detection
    * @param error - The error that occurred during execution
    */
@@ -195,13 +177,9 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
 
     // Check for quota limits (daily quota)
     if (this.isQuotaLimited(err, stdout)) {
-      const resetTime = new Date(Date.now() + this.getQuotaResetDelay());
-      logger.warn(
-        `Claude Code daily quota reached. Will retry at ${resetTime.toISOString()}...`
-      );
+      logger.warn('Claude Code daily quota reached. Will retry later...');
       throw new RateLimitError(
-        `Daily quota reached: ${stdout.trim().split('\n')[0]}`,
-        resetTime
+        `Daily quota reached: ${stdout.trim().split('\n')[0]}`
       );
     }
 

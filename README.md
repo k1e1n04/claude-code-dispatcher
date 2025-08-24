@@ -7,7 +7,7 @@ A local-first CLI tool that integrates Claude Code with GitHub for automated iss
 Claude Code Dispatcher monitors GitHub issues assigned to a specific user, processes them using ClaudeCode, and automatically creates pull requests with the generated solutions.
 
 **Why this project?**  
-By running locally rather than in the cloud, `claude-code-dispatcher` gives Claude Code full access to your actual development environment. This allows more accurate code generation that respects your local setup, toolchain configurations, and dependency versions—something cloud-based automation tools cannot achieve.  
+By running locally rather than in the cloud, `claude-code-dispatcher` gives Claude Code full access to your actual development environment. This allows more accurate code generation that respects your local setup, toolchain configurations, and dependency versions—something cloud-based automation tools cannot achieve.
 
 With a locally running dispatcher, you can fully leverage a subscription-based Claude Code from anywhere. For example, you can keep your home PC running continuously, and when you create an issue from your smartphone, the dispatcher automatically generates a PR on your local machine without any additional intervention.
 
@@ -46,6 +46,7 @@ claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
+  --rate-limit-retry-delay 300 \
   --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)" \
   --base-branch main \
   --interval 60
@@ -64,6 +65,8 @@ claude-code-dispatcher start \
   --owner <github-owner> \
   --repo <repository-name> \
   --assignee <github-username> \
+  --rate-limit-retry-delay 300 \
+  --rate-limit-retry-delay 300 \
   --base-branch main \
   --interval 60
 ```
@@ -87,18 +90,19 @@ claude-code-dispatcher validate \
 
 ## Configuration Options
 
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--owner` | `-o` | GitHub repository owner | Required |
-| `--repo` | `-r` | GitHub repository name | Required |
-| `--assignee` | `-a` | GitHub username to monitor | Required |
-| `--allowedTools` | | List of allowed tools for Claude Code | Optional |
-| `--dangerously-skip-permissions` | | Skip permission checks (YOLO mode) | Optional |
-| `--disallowedTools` | | List of disallowed tools for Claude Code | Optional |
-| `--base-branch` | `-b` | Base branch for PRs | `main` |
-| `--interval` | `-i` | Polling interval (seconds) | `60` |
-| `--max-retries` | | Maximum retry attempts | `3` |
-| `--working-dir` | `-w` | Git operations directory | Current directory |
+| Option                           | Short | Description                                          | Default           |
+| -------------------------------- | ----- | ---------------------------------------------------- | ----------------- |
+| `--owner`                        | `-o`  | GitHub repository owner                              | Required          |
+| `--repo`                         | `-r`  | GitHub repository name                               | Required          |
+| `--assignee`                     | `-a`  | GitHub username to monitor                           | Required          |
+| `--allowedTools`                 |       | List of allowed tools for Claude Code                | Optional          |
+| `--dangerously-skip-permissions` |       | Skip permission checks (YOLO mode)                   | Optional          |
+| `--disallowedTools`              |       | List of disallowed tools for Claude Code             | Optional          |
+| `--base-branch`                  | `-b`  | Base branch for PRs                                  | `main`            |
+| `--interval`                     | `-i`  | Polling interval (seconds)                           | `60`              |
+| `--max-retries`                  |       | Maximum retry attempts                               | `3`               |
+| `--rate-limit-retry-delay`       |       | Delay before retry after Claude rate limit (seconds) | `300`             |
+| `--working-dir`                  | `-w`  | Git operations directory                             | Current directory |
 
 ## Tool Permissions
 
@@ -151,27 +155,32 @@ claude-code-dispatcher start \
 ### Recommended Tool Sets
 
 **For basic code changes:**
+
 ```bash
 --allowedTools "Edit" "Write" "Read" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)"
 ```
 
 **For full automation (recommended):**
+
 ```bash
 --allowedTools "Edit" "Write" "Read" "Bash(npm run build:*)" "Bash(npm run test:*)" "Bash(git add:*)" "Bash(git commit:*)" "Bash(git push:*)" "Bash(gh pr create:*)"
 ```
 
 **Minimal permissions (code changes only, no PR creation):**
+
 ```bash
 --allowedTools "Edit" "Write" "Bash(git add:*)" "Bash(git commit:*)"
 ```
 
 **Required permissions for automation:**
+
 - `"Bash(git add:*)"` - Required for staging changes made by Claude Code
 - `"Bash(git commit:*)"` - Required for committing changes to the repository
 - `"Bash(git push:*)"` - Required for pushing branches to remote repository
 - `"Bash(gh pr create:*)"` - Required for creating pull requests via GitHub CLI
 
 **Security considerations:**
+
 - Always use specific patterns (e.g., `"Bash(npm run build:*)"` instead of `"Bash"`)
 - Explicitly disallow dangerous operations with `--disallowedTools`
 - Review tool permissions regularly based on your repository's needs
@@ -237,6 +246,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding st
 ## Logging
 
 The dispatcher creates comprehensive logs:
+
 - `combined.log`: All log messages
 - `error.log`: Error messages only
 - Console output with colored formatting
@@ -244,7 +254,9 @@ The dispatcher creates comprehensive logs:
 ## Error Handling
 
 - **Retry Logic**: Automatic retries with exponential backoff
-- **Rate Limiting**: GitHub API rate limit monitoring and handling
+- **Rate Limiting**:
+  - Claude Code: When rate limited (including quota), processing pauses for the configured `--rate-limit-retry-delay` and retries the current issue without dequeuing it
+  - GitHub API: Rate limit monitoring and waiting until reset
 - **Graceful Shutdown**: Proper cleanup on SIGINT/SIGTERM
 - **Issue Tracking**: Prevents duplicate processing of issues
 
@@ -253,7 +265,7 @@ The dispatcher creates comprehensive logs:
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 
 - 🐛 Reporting issues
-- ✨ Submitting features  
+- ✨ Submitting features
 - 🔄 Creating pull requests
 - 💻 Development setup
 - 🎨 Coding standards
