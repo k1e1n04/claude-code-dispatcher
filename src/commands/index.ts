@@ -7,10 +7,13 @@ import { logger } from '../utils';
 
 const program = new Command();
 
+// Import version from package.json
+const { version } = require('../../package.json');
+
 program
   .name('claude-code-dispatcher')
   .description('CLI tool to integrate ClaudeCode with GitHub for automated issue processing')
-  .version('1.0.0');
+  .version(version);
 
 program
   .command('start')
