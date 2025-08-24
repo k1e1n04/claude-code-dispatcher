@@ -146,6 +146,5 @@ program
     }
   });
 
-if (require.main === module) {
-  program.parse();
-}
+// Always parse when required (needed for bin script)
+program.parse();
