@@ -322,11 +322,6 @@ LOG_LEVEL=debug npm run dev -- start --owner myorg --repo myproject
 - **GitHub Discussions**: For questions and general discussion
 - **Pull Request Reviews**: For code-specific questions
 
-### Response Times
-
-- **Bug reports**: We aim to respond within 48 hours
-- **Feature requests**: We aim to respond within 1 week
-- **Pull requests**: We aim to review within 1 week
 
 ## 🎉 Recognition
 
