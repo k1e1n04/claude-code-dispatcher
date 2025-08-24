@@ -66,7 +66,6 @@ claude-code-dispatcher start \
   --repo <repository-name> \
   --assignee <github-username> \
   --rate-limit-retry-delay 300 \
-  --rate-limit-retry-delay 300 \
   --base-branch main \
   --interval 60
 ```
