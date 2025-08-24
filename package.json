@@ -1,6 +1,6 @@
 {
   "name": "claude-code-dispatcher",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "CLI tool to integrate ClaudeCode with GitHub for automated issue processing",
   "main": "dist/index.js",
   "bin": {
@@ -42,5 +42,11 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "files": [
+    "dist/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ]
 }
