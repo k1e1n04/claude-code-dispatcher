@@ -25,6 +25,10 @@
   ],
   "author": "k1e1n04",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/k1e1n04/claude-code-dispatcher.git"
+  },
   "dependencies": {
     "commander": "^11.0.0",
     "winston": "^3.10.0"
