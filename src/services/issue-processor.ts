@@ -30,42 +30,52 @@ export class IssueProcessor {
       // Step 1: Switch to new branch
       await this.gitRepository.switchToBranch(branchName, baseBranch);
       
-      // Step 2: Execute implementation
-      const implementationPrompt = this.promptBuilder.createImplementationPrompt(issue);
-      await RetryHandler.withRetry(
-        () => this.claudeExecutor.execute(implementationPrompt),
-        3,
-        2000,
-        `ClaudeCode execution for issue #${issue.number}`
-      );
-      
-      // Step 3: Check for changes
-      const hasChanges = await this.gitRepository.checkForChanges();
-      if (!hasChanges) {
-        logger.warn(`No changes detected for issue #${issue.number}`);
-        return {
-          success: false,
-          error: 'No changes were made by ClaudeCode'
-        };
-      }
+      try {
+        // Step 2: Execute implementation
+        const implementationPrompt = this.promptBuilder.createImplementationPrompt(issue);
+        await RetryHandler.withRetry(
+          () => this.claudeExecutor.execute(implementationPrompt),
+          3,
+          2000,
+          `ClaudeCode execution for issue #${issue.number}`
+        );
+        
+        // Step 3: Check for changes
+        const hasChanges = await this.gitRepository.checkForChanges();
+        if (!hasChanges) {
+          logger.warn(`No changes detected for issue #${issue.number}`);
+          return {
+            success: false,
+            error: 'No changes were made by ClaudeCode'
+          };
+        }
 
-      // Step 4: Commit and push
-      const commitPrompt = this.promptBuilder.createCommitPrompt();
-      await RetryHandler.withRetry(
-        () => this.claudeExecutor.execute(commitPrompt),
-        3,
-        2000,
-        `ClaudeCode commit and push for issue #${issue.number}`
-      );
-      
-      // Step 5: Create pull request
-      const prPrompt = this.promptBuilder.createPullRequestPrompt(baseBranch);
-      await RetryHandler.withRetry(
-        () => this.claudeExecutor.execute(prPrompt),
-        3,
-        2000,
-        `ClaudeCode pull request creation for issue #${issue.number}`
-      );
+        // Step 4: Commit and push
+        const commitPrompt = this.promptBuilder.createCommitPrompt();
+        await RetryHandler.withRetry(
+          () => this.claudeExecutor.execute(commitPrompt),
+          3,
+          2000,
+          `ClaudeCode commit and push for issue #${issue.number}`
+        );
+        
+        // Step 5: Create pull request
+        const prPrompt = this.promptBuilder.createPullRequestPrompt(baseBranch);
+        await RetryHandler.withRetry(
+          () => this.claudeExecutor.execute(prPrompt),
+          3,
+          2000,
+          `ClaudeCode pull request creation for issue #${issue.number}`
+        );
+      } catch (execError) {
+        if (execError instanceof RateLimitError) {
+          // Delete branch if rate limited to avoid conflicts on next branch switch
+          this.gitRepository.switchBranch(baseBranch);
+          this.gitRepository.deleteBranch(branchName);
+          throw execError;
+        }
+        throw execError; // Other execution errors
+      }
       
       return {
         success: true,

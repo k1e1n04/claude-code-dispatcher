@@ -7,6 +7,8 @@ import { logger } from '../utils';
  */
 export interface IGitRepository {
   switchToBranch(branchName: string, baseBranch: string): Promise<void>;
+  switchBranch(branchName: string): Promise<void>;
+  deleteBranch(branchName: string): void;
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
 }
@@ -33,6 +35,22 @@ export class GitRepository implements IGitRepository {
   }
 
   /**
+   * Deletes a local branch
+   * @param branchName - Name of the branch to delete
+   */
+  deleteBranch(branchName: string): void {
+    try {
+      logger.info(`Deleting branch: ${branchName}`);
+      execSync(`git branch -D ${branchName}`, { 
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
+    } catch (error) {
+      logger.error(`Failed to delete branch ${branchName}:`, error);
+    }
+  }
+
+  /**
    * Switches to a new branch based on the base branch
    * @param branchName - Name of the new branch to create
    * @param baseBranch - Base branch to create from
@@ -56,6 +74,23 @@ export class GitRepository implements IGitRepository {
         stdio: 'pipe' 
       });
       
+    } catch (error) {
+      logger.error(`Failed to switch to branch ${branchName}:`, error);
+      throw new Error(`Branch switching failed: ${error}`);
+    }
+  }
+
+  /**
+   * Switches to an existing branch
+   * @param branchName - Name of the branch to switch to
+   */
+  async switchBranch(branchName: string): Promise<void> {
+    try {
+      logger.info(`Switching to branch: ${branchName}`);
+      execSync(`git checkout ${branchName}`, { 
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
     } catch (error) {
       logger.error(`Failed to switch to branch ${branchName}:`, error);
       throw new Error(`Branch switching failed: ${error}`);
