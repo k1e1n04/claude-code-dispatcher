@@ -87,6 +87,25 @@ describe('ClaudeCodeExecutor', () => {
       const hooks = executor as unknown as ExecutorTestHooks;
       expect(hooks.rateLimitRetryDelay).toBe(10 * 60 * 1000);
     });
+
+    test('should accept timeout configuration', () => {
+      const executor = new ClaudeCodeExecutor({
+        timeout: 600000,
+        bashDefaultTimeoutMs: 400000,
+        bashMaxTimeoutMs: 800000,
+      });
+      
+      // Access private properties for testing
+      const privateExecutor = executor as unknown as {
+        timeout: number;
+        bashDefaultTimeoutMs: number;
+        bashMaxTimeoutMs: number;
+      };
+      
+      expect(privateExecutor.timeout).toBe(600000);
+      expect(privateExecutor.bashDefaultTimeoutMs).toBe(400000);
+      expect(privateExecutor.bashMaxTimeoutMs).toBe(800000);
+    });
   });
 
   describe('execution', () => {
@@ -110,6 +129,11 @@ describe('ClaudeCodeExecutor', () => {
           encoding: 'utf8',
           stdio: ['pipe', 'pipe', 'inherit'],
           timeout: 300000,
+          env: expect.objectContaining({
+            BASH_DEFAULT_TIMEOUT_MS: '300000',
+            BASH_MAX_TIMEOUT_MS: '600000',
+            ...process.env,
+          }),
         }
       );
     });
