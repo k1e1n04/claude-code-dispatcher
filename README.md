@@ -244,11 +244,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding st
 
 ## Logging
 
-The dispatcher creates comprehensive logs:
+The dispatcher creates comprehensive logs with automatic rotation:
 
-- `combined.log`: All log messages
-- `error.log`: Error messages only
-- Console output with colored formatting
+- **Log files**: Daily rotated files in `logs/` directory
+  - `logs/combined-YYYY-MM-DD.log`: All log messages  
+  - `logs/error-YYYY-MM-DD.log`: Error messages only
+- **Console output**: Colored formatting for real-time monitoring
+- **Retention**: 1-week retention policy with automatic cleanup
+- **Compression**: Old log files are automatically compressed
+
+### Log Configuration
+
+Configure log rotation via environment variables:
+
+| Variable              | Default | Description                              |
+| --------------------- | ------- | ---------------------------------------- |
+| `LOG_MAX_SIZE`        | `20m`   | Maximum size per log file               |
+| `LOG_RETENTION_DAYS`  | `7d`    | Number of days to keep logs             |
+| `LOG_DIRECTORY`       | `logs`  | Directory for log files                 |
+
+Example:
+```bash
+export LOG_MAX_SIZE=50m
+export LOG_RETENTION_DAYS=14d
+export LOG_DIRECTORY=/var/log/claude-dispatcher
+claude-code-dispatcher start ...
+```
 
 ## Error Handling
 
