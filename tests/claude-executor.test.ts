@@ -128,10 +128,10 @@ describe('ClaudeCodeExecutor', () => {
           input: 'Test prompt',
           encoding: 'utf8',
           stdio: ['pipe', 'pipe', 'inherit'],
-          timeout: 300000,
+          timeout: 600000,
           env: expect.objectContaining({
-            BASH_DEFAULT_TIMEOUT_MS: '300000',
-            BASH_MAX_TIMEOUT_MS: '600000',
+            BASH_DEFAULT_TIMEOUT_MS: '600000',
+            BASH_MAX_TIMEOUT_MS: '1200000',
             ...process.env,
           }),
         }
