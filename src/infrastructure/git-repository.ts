@@ -9,6 +9,7 @@ export interface IGitRepository {
   switchToBranch(branchName: string, baseBranch: string): Promise<void>;
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
+  deleteBranch(branchName: string, baseBranch: string): void;
 }
 
 /**
@@ -77,6 +78,36 @@ export class GitRepository implements IGitRepository {
     } catch (error) {
       logger.error('Failed to check for changes:', error);
       return false;
+    }
+  }
+
+  /**
+   * Deletes a local branch if it exists
+   * @param branchName - Name of the branch to delete
+   * @param baseBranch - Base branch to switch to before deletion
+   */
+  deleteBranch(branchName: string, baseBranch: string): void {
+    try {
+      // Switch to base branch before deleting branch
+      execSync(`git checkout ${baseBranch}`, { 
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
+
+      // Delete local branch if it exists
+      try {
+        execSync(`git branch -D ${branchName}`, { 
+          cwd: this.workingDirectory, 
+          stdio: 'pipe' 
+        });
+        logger.info(`Deleted local branch: ${branchName}`);
+      } catch {
+        logger.debug(`Local branch ${branchName} does not exist or already deleted`);
+      }
+
+    } catch (error) {
+      logger.warn(`Failed to cleanup branch ${branchName}:`, error);
+      // Don't throw error as branch cleanup is not critical
     }
   }
 }
