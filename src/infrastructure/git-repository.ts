@@ -9,6 +9,7 @@ export interface IGitRepository {
   switchToBranch(branchName: string, baseBranch: string): Promise<void>;
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
+  deleteBranch(branchName: string): Promise<void>;
 }
 
 /**
@@ -77,6 +78,54 @@ export class GitRepository implements IGitRepository {
     } catch (error) {
       logger.error('Failed to check for changes:', error);
       return false;
+    }
+  }
+
+  /**
+   * Deletes a branch both locally and remotely if it exists
+   * @param branchName - Name of the branch to delete
+   */
+  async deleteBranch(branchName: string): Promise<void> {
+    try {
+      // Switch to main/master before deleting branch
+      try {
+        execSync('git checkout main', { 
+          cwd: this.workingDirectory, 
+          stdio: 'pipe' 
+        });
+      } catch {
+        // If main doesn't exist, try master
+        execSync('git checkout master', { 
+          cwd: this.workingDirectory, 
+          stdio: 'pipe' 
+        });
+      }
+
+      // Delete local branch if it exists
+      try {
+        execSync(`git branch -D ${branchName}`, { 
+          cwd: this.workingDirectory, 
+          stdio: 'pipe' 
+        });
+        logger.info(`Deleted local branch: ${branchName}`);
+      } catch {
+        logger.debug(`Local branch ${branchName} does not exist or already deleted`);
+      }
+
+      // Delete remote branch if it exists
+      try {
+        execSync(`git push origin --delete ${branchName}`, { 
+          cwd: this.workingDirectory, 
+          stdio: 'pipe' 
+        });
+        logger.info(`Deleted remote branch: ${branchName}`);
+      } catch {
+        logger.debug(`Remote branch ${branchName} does not exist or already deleted`);
+      }
+
+    } catch (error) {
+      logger.warn(`Failed to cleanup branch ${branchName}:`, error);
+      // Don't throw error as branch cleanup is not critical
     }
   }
 }

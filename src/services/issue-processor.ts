@@ -23,12 +23,14 @@ export class IssueProcessor {
    */
   async processIssue(issue: GitHubIssue, baseBranch: string): Promise<ProcessingResult> {
     const branchName = this.gitRepository.generateBranchName(issue);
+    let branchCreated = false;
     
     try {
       logger.info(`Processing issue #${issue.number}: ${issue.title}`);
       
       // Step 1: Switch to new branch
       await this.gitRepository.switchToBranch(branchName, baseBranch);
+      branchCreated = true;
       
       // Step 2: Execute implementation
       const implementationPrompt = this.promptBuilder.createImplementationPrompt(issue);
@@ -43,6 +45,8 @@ export class IssueProcessor {
       const hasChanges = await this.gitRepository.checkForChanges();
       if (!hasChanges) {
         logger.warn(`No changes detected for issue #${issue.number}`);
+        // Cleanup branch since Claude Code didn't make any changes
+        await this.cleanupBranch(branchName, 'no changes made');
         return {
           success: false,
           error: 'No changes were made by ClaudeCode'
@@ -79,11 +83,30 @@ export class IssueProcessor {
         throw error;
       }
       
+      // Only cleanup branch if it was created and Claude Code execution failed
+      if (branchCreated) {
+        await this.cleanupBranch(branchName, 'Claude Code execution failure');
+      }
+      
       logger.error(`Failed to process issue #${issue.number}:`, error);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
       };
+    }
+  }
+
+  /**
+   * Cleans up a branch when processing fails
+   * @param branchName - Name of the branch to cleanup
+   * @param reason - Reason for cleanup (for logging)
+   */
+  private async cleanupBranch(branchName: string, reason: string): Promise<void> {
+    try {
+      logger.info(`Cleaning up branch ${branchName} due to ${reason}`);
+      await this.gitRepository.deleteBranch(branchName);
+    } catch (cleanupError) {
+      logger.warn(`Failed to cleanup branch ${branchName}:`, cleanupError);
     }
   }
 }
