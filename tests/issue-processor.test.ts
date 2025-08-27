@@ -33,6 +33,7 @@ describe('IssueProcessor', () => {
       switchToBranch: jest.fn(),
       checkForChanges: jest.fn(),
       deleteBranch: jest.fn(),
+      discardChanges: jest.fn(),
     };
 
     mockClaudeExecutor = {
@@ -148,6 +149,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('No changes were made by ClaudeCode');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
@@ -159,6 +161,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Git error');
+      expect(mockGitRepository.discardChanges).not.toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).not.toHaveBeenCalled();
     });
 
@@ -173,6 +176,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude execution failed');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
@@ -189,6 +193,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude execution failed');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
       // Should still return the original error, not the cleanup error
     });
@@ -208,6 +213,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Commit failed');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
@@ -228,6 +234,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('PR creation failed');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
@@ -255,6 +262,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Implementation failed');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
@@ -266,6 +274,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Branch creation failed');
+      expect(mockGitRepository.discardChanges).not.toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).not.toHaveBeenCalled();
     });
 
@@ -282,6 +291,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Original error');
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
   });

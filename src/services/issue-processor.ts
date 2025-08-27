@@ -105,6 +105,7 @@ export class IssueProcessor {
   private cleanupBranch(branchName: string, baseBranch: string, reason: string): void {
     try {
       logger.info(`Cleaning up branch ${branchName} due to ${reason}`);
+      this.gitRepository.discardChanges();
       this.gitRepository.deleteBranch(branchName, baseBranch);
     } catch (cleanupError) {
       logger.warn(`Failed to cleanup branch ${branchName}:`, cleanupError);
