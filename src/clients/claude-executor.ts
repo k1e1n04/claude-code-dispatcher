@@ -40,9 +40,9 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
   private allowedTools: string[];
   private disallowedTools: string[];
   private dangerouslySkipPermissions: boolean;
-  private timeout: number = 300000; // Default timeout of 5 minutes
-  private bashDefaultTimeoutMs: number = 300000; // Default BASH_DEFAULT_TIMEOUT_MS of 5 minutes
-  private bashMaxTimeoutMs: number = 600000; // Default BASH_MAX_TIMEOUT_MS of 10 minutes
+  private timeout: number = 300000;
+  private bashDefaultTimeoutMs: number = 300000;
+  private bashMaxTimeoutMs: number = 600000;
   public rateLimitRetryDelay: number | undefined;
 
   constructor(config: ClaudeExecutorConfig = {}) {
