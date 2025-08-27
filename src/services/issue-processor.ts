@@ -78,14 +78,14 @@ export class IssueProcessor {
       };
       
     } catch (error) {
-      // Let RateLimitError bubble up to be handled by dispatcher
-      if (error instanceof RateLimitError) {
-        throw error;
-      }
-      
       // Only cleanup branch if it was created and Claude Code execution failed
       if (branchCreated) {
         this.cleanupBranch(branchName, baseBranch, 'Claude Code execution failure');
+      }
+      
+      // Let RateLimitError bubble up to be handled by dispatcher
+      if (error instanceof RateLimitError) {
+        throw error;
       }
       
       logger.error(`Failed to process issue #${issue.number}:`, error);
