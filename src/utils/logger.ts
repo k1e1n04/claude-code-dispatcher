@@ -19,7 +19,32 @@ export const logger = winston.createLogger({
         winston.format.printf(({ level, message, timestamp, ...meta }) => {
           let msg = `${timestamp} [${level}]: ${message}`;
           if (Object.keys(meta).length > 0) {
-            msg += ` ${JSON.stringify(meta)}`;
+            try {
+              msg += ` ${JSON.stringify(meta)}`;
+            } catch (error) {
+              // Handle circular reference errors
+              const safeObject = Object.keys(meta).reduce((acc, key) => {
+                const value = meta[key];
+                if (value instanceof Error) {
+                  acc[key] = {
+                    name: value.name,
+                    message: value.message,
+                    stack: value.stack
+                  };
+                } else if (typeof value === 'object' && value !== null) {
+                  try {
+                    JSON.stringify(value);
+                    acc[key] = value;
+                  } catch {
+                    acc[key] = '[Circular or Non-Serializable Object]';
+                  }
+                } else {
+                  acc[key] = value;
+                }
+                return acc;
+              }, {} as Record<string, unknown>);
+              msg += ` ${JSON.stringify(safeObject)}`;
+            }
           }
           return msg;
         })
