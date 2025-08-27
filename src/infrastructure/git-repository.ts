@@ -82,7 +82,7 @@ export class GitRepository implements IGitRepository {
   }
 
   /**
-   * Deletes a branch both locally and remotely if it exists
+   * Deletes a local branch if it exists
    * @param branchName - Name of the branch to delete
    * @param baseBranch - Base branch to switch to before deletion
    */
@@ -103,17 +103,6 @@ export class GitRepository implements IGitRepository {
         logger.info(`Deleted local branch: ${branchName}`);
       } catch {
         logger.debug(`Local branch ${branchName} does not exist or already deleted`);
-      }
-
-      // Delete remote branch if it exists
-      try {
-        execSync(`git push origin --delete ${branchName}`, { 
-          cwd: this.workingDirectory, 
-          stdio: 'pipe' 
-        });
-        logger.info(`Deleted remote branch: ${branchName}`);
-      } catch {
-        logger.debug(`Remote branch ${branchName} does not exist or already deleted`);
       }
 
     } catch (error) {
