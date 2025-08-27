@@ -148,7 +148,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('No changes were made by ClaudeCode');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
     test('should handle git repository errors and not cleanup branch', async () => {
@@ -173,7 +173,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude execution failed');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
     test('should handle branch cleanup failure gracefully', async () => {
@@ -187,7 +187,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Claude execution failed');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
       // Should still return the original error, not the cleanup error
     });
 
@@ -206,7 +206,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Commit failed');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
     test('should handle PR creation failure and cleanup branch', async () => {
@@ -226,7 +226,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('PR creation failed');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
     test('should not cleanup branch when RateLimitError occurs after branch creation', async () => {
@@ -253,7 +253,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Implementation failed');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
     test('should not cleanup branch when switchToBranch fails', async () => {
@@ -278,7 +278,7 @@ describe('IssueProcessor', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Original error');
-      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue');
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
   });
 

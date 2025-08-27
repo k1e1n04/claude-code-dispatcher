@@ -9,7 +9,7 @@ export interface IGitRepository {
   switchToBranch(branchName: string, baseBranch: string): Promise<void>;
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
-  deleteBranch(branchName: string): Promise<void>;
+  deleteBranch(branchName: string, baseBranch: string): Promise<void>;
 }
 
 /**
@@ -84,22 +84,15 @@ export class GitRepository implements IGitRepository {
   /**
    * Deletes a branch both locally and remotely if it exists
    * @param branchName - Name of the branch to delete
+   * @param baseBranch - Base branch to switch to before deletion
    */
-  async deleteBranch(branchName: string): Promise<void> {
+  async deleteBranch(branchName: string, baseBranch: string): Promise<void> {
     try {
-      // Switch to main/master before deleting branch
-      try {
-        execSync('git checkout main', { 
-          cwd: this.workingDirectory, 
-          stdio: 'pipe' 
-        });
-      } catch {
-        // If main doesn't exist, try master
-        execSync('git checkout master', { 
-          cwd: this.workingDirectory, 
-          stdio: 'pipe' 
-        });
-      }
+      // Switch to base branch before deleting branch
+      execSync(`git checkout ${baseBranch}`, { 
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
 
       // Delete local branch if it exists
       try {
