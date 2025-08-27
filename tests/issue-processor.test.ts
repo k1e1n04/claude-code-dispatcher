@@ -238,7 +238,7 @@ describe('IssueProcessor', () => {
       expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
 
-    test('should not cleanup branch when RateLimitError occurs after branch creation', async () => {
+    test('should cleanup branch when RateLimitError occurs after branch creation', async () => {
       const rateLimitError = new RateLimitError('Rate limit exceeded');
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
@@ -246,7 +246,8 @@ describe('IssueProcessor', () => {
       mockClaudeExecutor.execute.mockRejectedValue(rateLimitError);
 
       await expect(issueProcessor.processIssue(mockIssue, 'main')).rejects.toThrow(RateLimitError);
-      expect(mockGitRepository.deleteBranch).not.toHaveBeenCalled();
+      expect(mockGitRepository.discardChanges).toHaveBeenCalled();
+      expect(mockGitRepository.deleteBranch).toHaveBeenCalledWith('issue-123-test-issue', 'main');
     });
   });
 
