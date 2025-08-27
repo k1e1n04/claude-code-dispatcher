@@ -9,7 +9,7 @@ export interface IGitRepository {
   switchToBranch(branchName: string, baseBranch: string): Promise<void>;
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
-  deleteBranch(branchName: string, baseBranch: string): Promise<void>;
+  deleteBranch(branchName: string, baseBranch: string): void;
 }
 
 /**
@@ -86,7 +86,7 @@ export class GitRepository implements IGitRepository {
    * @param branchName - Name of the branch to delete
    * @param baseBranch - Base branch to switch to before deletion
    */
-  async deleteBranch(branchName: string, baseBranch: string): Promise<void> {
+  deleteBranch(branchName: string, baseBranch: string): void {
     try {
       // Switch to base branch before deleting branch
       execSync(`git checkout ${baseBranch}`, { 

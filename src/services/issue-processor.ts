@@ -46,7 +46,7 @@ export class IssueProcessor {
       if (!hasChanges) {
         logger.warn(`No changes detected for issue #${issue.number}`);
         // Cleanup branch since Claude Code didn't make any changes
-        await this.cleanupBranch(branchName, baseBranch, 'no changes made');
+        this.cleanupBranch(branchName, baseBranch, 'no changes made');
         return {
           success: false,
           error: 'No changes were made by ClaudeCode'
@@ -85,7 +85,7 @@ export class IssueProcessor {
       
       // Only cleanup branch if it was created and Claude Code execution failed
       if (branchCreated) {
-        await this.cleanupBranch(branchName, baseBranch, 'Claude Code execution failure');
+        this.cleanupBranch(branchName, baseBranch, 'Claude Code execution failure');
       }
       
       logger.error(`Failed to process issue #${issue.number}:`, error);
@@ -102,10 +102,10 @@ export class IssueProcessor {
    * @param baseBranch - Base branch to switch to before deletion
    * @param reason - Reason for cleanup (for logging)
    */
-  private async cleanupBranch(branchName: string, baseBranch: string, reason: string): Promise<void> {
+  private cleanupBranch(branchName: string, baseBranch: string, reason: string): void {
     try {
       logger.info(`Cleaning up branch ${branchName} due to ${reason}`);
-      await this.gitRepository.deleteBranch(branchName, baseBranch);
+      this.gitRepository.deleteBranch(branchName, baseBranch);
     } catch (cleanupError) {
       logger.warn(`Failed to cleanup branch ${branchName}:`, cleanupError);
     }

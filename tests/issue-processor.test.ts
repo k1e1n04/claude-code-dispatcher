@@ -139,7 +139,7 @@ describe('IssueProcessor', () => {
     test('should handle no changes scenario and cleanup branch', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockResolvedValue();
+      mockGitRepository.deleteBranch.mockReturnValue();
       mockGitRepository.checkForChanges.mockResolvedValue(false); // No changes
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockClaudeExecutor.execute.mockResolvedValue();
@@ -165,7 +165,7 @@ describe('IssueProcessor', () => {
     test('should handle Claude executor errors and cleanup branch', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockResolvedValue();
+      mockGitRepository.deleteBranch.mockReturnValue();
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockClaudeExecutor.execute.mockRejectedValue(new Error('Claude execution failed'));
 
@@ -179,7 +179,9 @@ describe('IssueProcessor', () => {
     test('should handle branch cleanup failure gracefully', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockRejectedValue(new Error('Branch deletion failed'));
+      mockGitRepository.deleteBranch.mockImplementation(() => {
+        throw new Error('Branch deletion failed');
+      });
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockClaudeExecutor.execute.mockRejectedValue(new Error('Claude execution failed'));
 
@@ -194,7 +196,7 @@ describe('IssueProcessor', () => {
     test('should handle commit step failure and cleanup branch', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockResolvedValue();
+      mockGitRepository.deleteBranch.mockReturnValue();
       mockGitRepository.checkForChanges.mockResolvedValue(true);
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockPromptBuilder.createCommitPrompt.mockReturnValue('Commit prompt');
@@ -212,7 +214,7 @@ describe('IssueProcessor', () => {
     test('should handle PR creation failure and cleanup branch', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockResolvedValue();
+      mockGitRepository.deleteBranch.mockReturnValue();
       mockGitRepository.checkForChanges.mockResolvedValue(true);
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockPromptBuilder.createCommitPrompt.mockReturnValue('Commit prompt');
@@ -245,7 +247,7 @@ describe('IssueProcessor', () => {
     test('should cleanup branch when implementation step fails', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockResolvedValue();
+      mockGitRepository.deleteBranch.mockReturnValue();
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockClaudeExecutor.execute.mockRejectedValue(new Error('Implementation failed'));
 
@@ -270,7 +272,9 @@ describe('IssueProcessor', () => {
     test('should handle cleanup failure gracefully and still return original error', async () => {
       mockGitRepository.generateBranchName.mockReturnValue('issue-123-test-issue');
       mockGitRepository.switchToBranch.mockResolvedValue();
-      mockGitRepository.deleteBranch.mockRejectedValue(new Error('Cleanup failed'));
+      mockGitRepository.deleteBranch.mockImplementation(() => {
+        throw new Error('Cleanup failed');
+      });
       mockPromptBuilder.createImplementationPrompt.mockReturnValue('Implementation prompt');
       mockClaudeExecutor.execute.mockRejectedValue(new Error('Original error'));
 
