@@ -27,6 +27,9 @@ export interface ClaudeExecutorConfig {
   disallowedTools?: string[];
   dangerouslySkipPermissions?: boolean;
   rateLimitRetryDelay?: number; // Rate limit retry delay in milliseconds
+  timeout?: number; // Execution timeout in milliseconds
+  bashDefaultTimeoutMs?: number; // BASH_DEFAULT_TIMEOUT_MS environment variable
+  bashMaxTimeoutMs?: number; // BASH_MAX_TIMEOUT_MS environment variable
 }
 
 /**
@@ -37,7 +40,9 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
   private allowedTools: string[];
   private disallowedTools: string[];
   private dangerouslySkipPermissions: boolean;
-  // Exposed for test visibility only; dispatcher performs the waiting
+  private timeout: number = 300000;
+  private bashDefaultTimeoutMs: number = 300000;
+  private bashMaxTimeoutMs: number = 600000;
   public rateLimitRetryDelay: number | undefined;
 
   constructor(config: ClaudeExecutorConfig = {}) {
@@ -47,6 +52,16 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     this.dangerouslySkipPermissions =
       config.dangerouslySkipPermissions || false;
     this.rateLimitRetryDelay = config.rateLimitRetryDelay;
+    
+    if (config.bashDefaultTimeoutMs !== undefined) {
+      this.bashDefaultTimeoutMs = config.bashDefaultTimeoutMs;
+    }
+    if (config.bashMaxTimeoutMs !== undefined) {
+      this.bashMaxTimeoutMs = config.bashMaxTimeoutMs;
+    }
+    if (config.timeout !== undefined) {
+      this.timeout = config.timeout;
+    }
   }
 
   /**
@@ -59,12 +74,14 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
 
       const command = this.buildClaudeCommand();
       const { execSync } = await import('child_process');
+      const env = this.buildEnvironment();
       const output = execSync(command, {
         cwd: this.workingDirectory,
         input: prompt,
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'inherit'],
-        timeout: 300000,
+        timeout: this.timeout,
+        env,
       });
 
       logger.info(`ClaudeCode response: ${output.substring(0, 200)}...`);
@@ -119,6 +136,24 @@ export class ClaudeCodeExecutor implements IClaudeCodeExecutor {
     }
 
     return command;
+  }
+
+  /**
+   * Builds the environment variables for Claude Code execution
+   * @returns Environment variables object
+   */
+  private buildEnvironment(): NodeJS.ProcessEnv {
+    const env = { ...process.env };
+
+    if (this.bashDefaultTimeoutMs) {
+      env.BASH_DEFAULT_TIMEOUT_MS = this.bashDefaultTimeoutMs.toString();
+    }
+
+    if (this.bashMaxTimeoutMs) {
+      env.BASH_MAX_TIMEOUT_MS = this.bashMaxTimeoutMs.toString();
+    }
+
+    return env;
   }
 
   /**
