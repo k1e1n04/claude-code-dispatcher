@@ -122,4 +122,40 @@ describe('GitRepository', () => {
       expect(hasChanges).toBe(false);
     });
   });
+
+  describe('deleteBranch', () => {
+    test('should switch to base branch and delete target branch', () => {
+      mockExecSync.mockReturnValue('');
+
+      gitRepository.deleteBranch('test-branch', 'main');
+
+      expect(mockExecSync).toHaveBeenNthCalledWith(1, 'git checkout main', {
+        cwd: '/test/workspace',
+        stdio: 'pipe',
+      });
+
+      expect(mockExecSync).toHaveBeenNthCalledWith(2, 'git branch -D test-branch', {
+        cwd: '/test/workspace',
+        stdio: 'pipe',
+      });
+    });
+  });
+
+  describe('discardChanges', () => {
+    test('should reset and clean uncommitted changes', () => {
+      mockExecSync.mockReturnValue('');
+
+      gitRepository.discardChanges();
+
+      expect(mockExecSync).toHaveBeenNthCalledWith(1, 'git restore .', {
+        cwd: '/test/workspace',
+        stdio: 'pipe',
+      });
+
+      expect(mockExecSync).toHaveBeenNthCalledWith(2, 'git clean -fd', {
+        cwd: '/test/workspace',
+        stdio: 'pipe',
+      });
+    });
+  });
 });

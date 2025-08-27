@@ -10,6 +10,7 @@ export interface IGitRepository {
   checkForChanges(): Promise<boolean>;
   generateBranchName(issue: GitHubIssue): string;
   deleteBranch(branchName: string, baseBranch: string): void;
+  discardChanges(): void;
 }
 
 /**
@@ -108,6 +109,26 @@ export class GitRepository implements IGitRepository {
     } catch (error) {
       logger.warn(`Failed to cleanup branch ${branchName}:`, error);
       // Don't throw error as branch cleanup is not critical
+    }
+  }
+
+  /**
+   * Discards all uncommitted changes in the working directory
+   */
+  discardChanges(): void {
+    try {
+      execSync('git restore .', { 
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
+      execSync('git clean -fd', {
+        cwd: this.workingDirectory, 
+        stdio: 'pipe' 
+      });
+      logger.info('Discarded all uncommitted changes');
+    } catch (error) {
+      logger.warn('Failed to discard changes:', error);
+      // Don't throw error as discarding changes is not critical
     }
   }
 }
