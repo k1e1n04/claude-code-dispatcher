@@ -127,3 +127,5 @@ temp/
 # Claude Code Dispatcher specific
 claude-prompt-*.txt
 *.backup
+.claude-state/
+.test-*state*/
