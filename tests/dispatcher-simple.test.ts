@@ -1,11 +1,11 @@
-import { ClaudeCodeDispatcher } from '../src/services';
+import { ClaudeCodeDispatcher, DispatcherOrchestrator } from '../src/services';
 import { DispatcherConfig } from '../src/types';
 import { execSync } from 'child_process';
 
 jest.mock('child_process');
 const mockExecSync = execSync as jest.MockedFunction<typeof execSync>;
 
-describe('ClaudeCodeDispatcher - Simple Tests', () => {
+describe('ClaudeCodeDispatcher (DispatcherOrchestrator) - Simple Tests', () => {
   let config: DispatcherConfig;
   let dispatcher: ClaudeCodeDispatcher;
 
@@ -42,6 +42,7 @@ describe('ClaudeCodeDispatcher - Simple Tests', () => {
     test('should create dispatcher with valid config', () => {
       expect(dispatcher).toBeDefined();
       expect(dispatcher).toBeInstanceOf(ClaudeCodeDispatcher);
+      expect(dispatcher).toBeInstanceOf(DispatcherOrchestrator);
     });
 
     test('should accept working directory parameter', () => {
@@ -51,46 +52,23 @@ describe('ClaudeCodeDispatcher - Simple Tests', () => {
   });
 
   describe('prerequisites validation', () => {
-    test('should validate GitHub CLI authentication', async () => {
+    test('should validate prerequisites during start', async () => {
+      // Prerequisites validation is now handled by PrerequisitesValidator
+      // This test ensures the orchestrator calls validation during startup
       try {
-        await (dispatcher as any).validatePrerequisites();
+        await dispatcher.start();
+        // Should have called execSync for validation
+        expect(mockExecSync).toHaveBeenCalledWith('gh auth status', { stdio: 'pipe' });
+        expect(mockExecSync).toHaveBeenCalledWith('gh repo view testorg/testrepo', { stdio: 'pipe' });
+        expect(mockExecSync).toHaveBeenCalledWith('claude --version', { stdio: 'pipe' });
         
-        expect(mockExecSync).toHaveBeenCalledWith(
-          'gh auth status',
-          { stdio: 'pipe' }
-        );
+        await dispatcher.stop();
       } catch (error) {
-        // Expected to fail in test environment
+        // Expected to fail in test environment due to missing services
       }
     });
 
-    test('should validate repository access', async () => {
-      try {
-        await (dispatcher as any).validatePrerequisites();
-        
-        expect(mockExecSync).toHaveBeenCalledWith(
-          'gh repo view testorg/testrepo',
-          { stdio: 'pipe' }
-        );
-      } catch (error) {
-        // Expected to fail in test environment
-      }
-    });
-
-    test('should validate Claude CLI availability', async () => {
-      try {
-        await (dispatcher as any).validatePrerequisites();
-        
-        expect(mockExecSync).toHaveBeenCalledWith(
-          'claude --version',
-          { stdio: 'pipe' }
-        );
-      } catch (error) {
-        // Expected to fail in test environment
-      }
-    });
-
-    test('should handle missing GitHub CLI', async () => {
+    test('should handle prerequisites validation failure during start', async () => {
       mockExecSync.mockImplementation((command) => {
         if (command.toString().includes('gh auth status')) {
           const error = new Error('command not found') as any;
@@ -100,7 +78,7 @@ describe('ClaudeCodeDispatcher - Simple Tests', () => {
         return '';
       });
 
-      await expect((dispatcher as any).validatePrerequisites())
+      await expect(dispatcher.start())
         .rejects.toThrow('Prerequisites validation failed');
     });
   });
