@@ -1,9 +1,10 @@
 import { GitHubClient } from '../clients';
 import { IssueQueue } from './issue-queue';
 import { IssuePoller } from './poller';
-import { IssueProcessor } from './issue-processor';
+import { ResumableIssueProcessor } from './resumable-issue-processor';
+import { ProcessingStateManager } from './processing-state-manager';
 import { GitRepository } from '../infrastructure';
-import { ClaudeCodeExecutor, RateLimitError } from '../clients';
+import { ClaudeCodeExecutor } from '../clients';
 import { PromptBuilder } from '../utils';
 import { DispatcherConfig, GitHubIssue } from '../types';
 import { logger } from '../utils';
@@ -37,7 +38,8 @@ export class ClaudeCodeDispatcher {
   private githubClient: GitHubClient;
   private issueQueue: IssueQueue;
   private poller: IssuePoller;
-  private processor: IssueProcessor;
+  private processor: ResumableIssueProcessor;
+  private stateManager: ProcessingStateManager;
   private isRunning = false;
   private processingLoop: NodeJS.Timeout | null = null;
 
@@ -79,11 +81,13 @@ export class ClaudeCodeDispatcher {
       rateLimitRetryDelay: config.rateLimitRetryDelay,
     });
     const promptBuilder = new PromptBuilder();
+    this.stateManager = new ProcessingStateManager();
 
-    this.processor = new IssueProcessor(
+    this.processor = new ResumableIssueProcessor(
       gitRepository,
       claudeExecutor,
-      promptBuilder
+      promptBuilder,
+      this.stateManager
     );
   }
 
@@ -278,6 +282,12 @@ export class ClaudeCodeDispatcher {
           `Successfully created pull request for issue #${issue.number}`
         );
         return true; // Success - issue should be removed from queue
+      } else if (result.shouldResume) {
+        // Rate limit occurred, keep issue in queue for resume
+        logger.info(
+          `Issue #${issue.number} processing paused due to rate limit at step ${result.currentState?.currentStep}. Will resume later.`
+        );
+        return false; // Keep in queue for resume
       } else {
         logger.error(
           `Failed to process issue #${issue.number}: ${result.error}`
@@ -286,47 +296,19 @@ export class ClaudeCodeDispatcher {
         return true; // Regular failure - issue should be removed from queue
       }
     } catch (error) {
-      // Check if it's a rate limit error
-      if (error instanceof RateLimitError) {
-        return await this.handleRateLimit(error, issue);
-      }
-
+      // ResumableIssueProcessor handles rate limits via result.shouldResume
+      // Any thrown error here is unexpected
       logger.error(
         `Unexpected error processing issue #${issue.number}:`,
         error
       );
       this.githubClient.markIssueAsProcessed(issue.id);
-      return true; // Regular error - issue should be removed from queue
+      return true; // Unexpected error - issue should be removed from queue
     } finally {
       this.issueQueue.setProcessing(false);
     }
   }
 
-  /**
-   * Handles rate limit errors by pausing and retrying
-   * @private
-   * @param error - The rate limit error
-   * @param issue - The issue that was being processed
-   * @returns false to indicate issue should stay in queue
-   */
-  private async handleRateLimit(
-    _error: RateLimitError,
-    issue: GitHubIssue
-  ): Promise<boolean> {
-    const rateLimitRetryDelay =
-      this.config.rateLimitRetryDelay || 5 * 60 * 1000;
-    logger.warn(
-      `Claude Code rate limited. Pausing for ${
-        rateLimitRetryDelay / 60000
-      } minutes before retry...`
-    );
-    await new Promise((resolve) => setTimeout(resolve, rateLimitRetryDelay));
-
-    logger.info(
-      `Rate limit pause completed, will retry issue #${issue.number}...`
-    );
-    return false; // Issue should stay in queue for retry
-  }
 
   /**
    * Keeps the dispatcher alive and logs periodic status updates
