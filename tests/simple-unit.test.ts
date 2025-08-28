@@ -1,4 +1,4 @@
-import { ClaudeCodeDispatcher, IssueQueue, IssueProcessor } from '../src/services';
+import { ClaudeCodeDispatcher, IssueQueue, ResumableIssueProcessor } from '../src/services';
 import { GitHubClient, ClaudeCodeExecutor } from '../src/clients';
 import { GitRepository } from '../src/infrastructure';
 import { RetryHandler, PromptBuilder } from '../src/utils';
@@ -61,7 +61,9 @@ describe('Core Functionality Tests', () => {
         const gitRepository = new GitRepository('/test');
         const claudeExecutor = new ClaudeCodeExecutor({ workingDirectory: '/test' });
         const promptBuilder = new PromptBuilder();
-        new IssueProcessor(gitRepository, claudeExecutor, promptBuilder);
+        const { ProcessingStateManager } = require('../src/services');
+        const stateManager = new ProcessingStateManager();
+        new ResumableIssueProcessor(gitRepository, claudeExecutor, promptBuilder, stateManager);
       }).not.toThrow();
     });
   });
