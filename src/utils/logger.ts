@@ -1,5 +1,27 @@
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { RateLimitError } from '../clients';
+
+const LOG_MAX_SIZE = process.env.LOG_MAX_SIZE || '20m';
+const LOG_RETENTION_DAYS = process.env.LOG_RETENTION_DAYS || '7d';
+const LOG_DIRECTORY = process.env.LOG_DIRECTORY || 'logs';
+
+const errorRotateTransport = new DailyRotateFile({
+  filename: `${LOG_DIRECTORY}/error-%DATE%.log`,
+  datePattern: 'YYYY-MM-DD',
+  level: 'error',
+  maxSize: LOG_MAX_SIZE,
+  maxFiles: LOG_RETENTION_DAYS,
+  zippedArchive: true,
+});
+
+const combinedRotateTransport = new DailyRotateFile({
+  filename: `${LOG_DIRECTORY}/combined-%DATE%.log`,
+  datePattern: 'YYYY-MM-DD',
+  maxSize: LOG_MAX_SIZE,
+  maxFiles: LOG_RETENTION_DAYS,
+  zippedArchive: true,
+});
 
 export const logger = winston.createLogger({
   level: 'info',
@@ -10,8 +32,8 @@ export const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'claude-code-dispatcher' },
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
+    errorRotateTransport,
+    combinedRotateTransport,
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
