@@ -45,3 +45,40 @@ export interface ProcessingResult {
   pullRequestUrl?: string;
   error?: string;
 }
+
+/**
+ * Represents the processing steps for a GitHub issue
+ */
+export enum ProcessingStep {
+  BRANCH_CREATION = 'branch_creation',
+  IMPLEMENTATION = 'implementation', 
+  CHANGE_DETECTION = 'change_detection',
+  COMMIT_PUSH = 'commit_push',
+  PR_CREATION = 'pr_creation',
+  COMPLETED = 'completed'
+}
+
+/**
+ * Processing state for an issue that can be persisted and resumed
+ */
+export interface ProcessingState {
+  issueId: number;
+  branchName: string;
+  baseBranch: string;
+  currentStep: ProcessingStep;
+  completedSteps: ProcessingStep[];
+  lastUpdated: Date;
+  retryCount: number;
+}
+
+/**
+ * Result of a processing operation that can be resumed
+ */
+export interface ResumableProcessingResult {
+  success: boolean;
+  branchName?: string;
+  pullRequestUrl?: string;
+  error?: string;
+  shouldResume?: boolean;
+  currentState?: ProcessingState;
+}
