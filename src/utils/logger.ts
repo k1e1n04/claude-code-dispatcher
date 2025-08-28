@@ -2,6 +2,27 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { RateLimitError } from '../clients';
 
+const LOG_MAX_SIZE = process.env.LOG_MAX_SIZE || '20m';
+const LOG_RETENTION_DAYS = process.env.LOG_RETENTION_DAYS || '7d';
+const LOG_DIRECTORY = process.env.LOG_DIRECTORY || 'logs';
+
+const errorRotateTransport = new DailyRotateFile({
+  filename: `${LOG_DIRECTORY}/error-%DATE%.log`,
+  datePattern: 'YYYY-MM-DD',
+  level: 'error',
+  maxSize: LOG_MAX_SIZE,
+  maxFiles: LOG_RETENTION_DAYS,
+  zippedArchive: true,
+});
+
+const combinedRotateTransport = new DailyRotateFile({
+  filename: `${LOG_DIRECTORY}/combined-%DATE%.log`,
+  datePattern: 'YYYY-MM-DD',
+  maxSize: LOG_MAX_SIZE,
+  maxFiles: LOG_RETENTION_DAYS,
+  zippedArchive: true,
+});
+
 export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -11,23 +32,8 @@ export const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'claude-code-dispatcher' },
   transports: [
-    new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      level: 'error',
-      maxSize: process.env.LOG_MAX_SIZE || '20m',
-      maxFiles: process.env.LOG_RETENTION_DAYS || '7d',
-      zippedArchive: true,
-      dirname: process.env.LOG_DIRECTORY || 'logs'
-    }),
-    new DailyRotateFile({
-      filename: 'logs/combined-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: process.env.LOG_MAX_SIZE || '20m',
-      maxFiles: process.env.LOG_RETENTION_DAYS || '7d',
-      zippedArchive: true,
-      dirname: process.env.LOG_DIRECTORY || 'logs'
-    }),
+    errorRotateTransport,
+    combinedRotateTransport,
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
