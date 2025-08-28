@@ -250,12 +250,31 @@ The dispatcher creates comprehensive logs:
 - `error.log`: Error messages only
 - Console output with colored formatting
 
+## State Files
+
+The dispatcher creates a `.claude-state/` directory in your working directory to persist processing state for rate limit recovery.
+
+- **Location**: `.claude-state/` in the directory where you run the dispatcher
+- **Purpose**: Allows resuming issue processing from the exact step where rate limiting occurred
+- **Cleanup**: State files are automatically deleted when issues complete successfully
+- **Manual cleanup**: You can safely delete the `.claude-state/` directory if needed
+
+Example:
+```
+your-project/
+├── .claude-state/
+│   ├── 123.json  # Processing state for issue #123
+│   └── 456.json  # Processing state for issue #456
+└── ...
+```
+
 ## Error Handling
 
 - **Retry Logic**: Automatic retries with exponential backoff
 - **Rate Limiting**:
   - Claude Code: When rate limited (including quota), processing pauses for the configured `--rate-limit-retry-delay` and retries the current issue without dequeuing it
   - GitHub API: Rate limit monitoring and waiting until reset
+- **Resumable Processing**: Processing state is saved during rate limits, allowing seamless resumption from the exact step where interruption occurred
 - **Graceful Shutdown**: Proper cleanup on SIGINT/SIGTERM
 - **Issue Tracking**: Prevents duplicate processing of issues
 
