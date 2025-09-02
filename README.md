@@ -109,7 +109,6 @@ The dispatcher supports three permission modes for Claude Code execution:
 
 1. **Explicit permissions** (`--allowedTools`) - Define exactly which tools Claude Code can use
 2. **YOLO mode** (`--dangerously-skip-permissions`) - Grant unrestricted access (use with caution)
-3. **Default mode** (no flags) - Use Claude CLI's default settings and existing configuration
 
 ### YOLO Mode (⚠️ Use with Caution)
 
