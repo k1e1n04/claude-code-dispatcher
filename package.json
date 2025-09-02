@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:unit": "jest --testPathIgnorePatterns=/integration/",
-    "test:integration": "jest tests/integration --testTimeout=60000",
+    "test:integration": "jest tests/integration/simple-integration.test.ts --testTimeout=30000",
+    "test:integration:all": "jest tests/integration --testTimeout=60000",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
