@@ -11,6 +11,16 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { spawn } from 'child_process';
 
+// Mock logger to avoid file system operations
+jest.mock('../../src/utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
 describe('Simple Integration Tests', () => {
   let testDir: string;
   let originalCwd: string;
