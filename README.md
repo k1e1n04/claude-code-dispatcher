@@ -232,14 +232,6 @@ claude-code-dispatcher status \
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, coding standards, and contribution guidelines.
 
-## Logging
-
-The dispatcher creates comprehensive logs:
-
-- `combined.log`: All log messages
-- `error.log`: Error messages only
-- Console output with colored formatting
-
 ## State Files
 
 The dispatcher creates a `.claude-state/` directory in your working directory to persist processing state for rate limit recovery.
@@ -257,16 +249,6 @@ your-project/
 │   └── 456.json  # Processing state for issue #456
 └── ...
 ```
-
-## Error Handling
-
-- **Retry Logic**: Automatic retries with exponential backoff
-- **Rate Limiting**:
-  - Claude Code: When rate limited (including quota), processing pauses for the configured `--rate-limit-retry-delay` and retries the current issue without dequeuing it
-  - GitHub API: Rate limit monitoring and waiting until reset
-- **Resumable Processing**: Processing state is saved during rate limits, allowing seamless resumption from the exact step where interruption occurred
-- **Graceful Shutdown**: Proper cleanup on SIGINT/SIGTERM
-- **Issue Tracking**: Prevents duplicate processing of issues
 
 ## Contributing
 
