@@ -34,6 +34,7 @@ export interface DispatcherConfig {
   allowedTools?: string[];
   disallowedTools?: string[];
   dangerouslySkipPermissions?: boolean;
+  rateLimitRetryDelay?: number;
 }
 
 /**
