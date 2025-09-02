@@ -13,6 +13,8 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:unit": "jest --testPathIgnorePatterns=/integration/",
+    "test:integration": "jest tests/integration --testTimeout=30000",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
