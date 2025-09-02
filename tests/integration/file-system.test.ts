@@ -72,7 +72,7 @@ describe('File System Integration Tests', () => {
 
       // Create multiple state files
       const issues = [123, 456, 789];
-      const stateFiles = [];
+      const stateFiles: string[] = [];
 
       for (const issueId of issues) {
         const stateFile = join(stateDir, `${issueId}.json`);
