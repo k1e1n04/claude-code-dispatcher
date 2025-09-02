@@ -3,6 +3,36 @@
  * Basic integration tests that focus on the core functionality without complex mocking
  */
 
+// Mock winston before any imports to prevent file creation
+jest.mock('winston', () => {
+  const mockLogger = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn()
+  };
+  return {
+    createLogger: jest.fn(() => mockLogger),
+    format: {
+      combine: jest.fn(),
+      timestamp: jest.fn(),
+      errors: jest.fn(),
+      json: jest.fn(),
+      colorize: jest.fn(),
+      simple: jest.fn()
+    },
+    transports: {
+      Console: jest.fn()
+    }
+  };
+});
+
+jest.mock('winston-daily-rotate-file', () => {
+  return jest.fn().mockImplementation(() => ({
+    // Mock transport
+  }));
+});
+
 import { ProcessingStateManager } from '../../src/services/processing-state-manager';
 import { GitRepository } from '../../src/infrastructure/git-repository';
 import { ProcessingStep } from '../../src/types/index';
@@ -11,22 +41,16 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 import { spawn } from 'child_process';
 
-// Mock logger to avoid file system operations
-jest.mock('../../src/utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn()
-  }
-}));
-
 describe('Simple Integration Tests', () => {
   let testDir: string;
   let originalCwd: string;
+  let originalNodeEnv: string | undefined;
 
   beforeEach(async () => {
     originalCwd = process.cwd();
+    originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
+    
     testDir = await fs.mkdtemp(join(tmpdir(), 'simple-integration-test-'));
     process.chdir(testDir);
 
@@ -42,6 +66,11 @@ describe('Simple Integration Tests', () => {
 
   afterEach(async () => {
     process.chdir(originalCwd);
+    if (originalNodeEnv !== undefined) {
+      process.env.NODE_ENV = originalNodeEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
     await fs.rm(testDir, { recursive: true, force: true });
   });
 
