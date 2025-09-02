@@ -59,15 +59,6 @@ claude-code-dispatcher start \
   --dangerously-skip-permissions \
   --base-branch main \
   --interval 60
-
-# Without explicit permissions (uses Claude CLI's default settings)
-claude-code-dispatcher start \
-  --owner <github-owner> \
-  --repo <repository-name> \
-  --assignee <github-username> \
-  --rate-limit-retry-delay 300 \
-  --base-branch main \
-  --interval 60
 ```
 
 ### Check Status
