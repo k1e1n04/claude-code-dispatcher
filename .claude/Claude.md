@@ -11,7 +11,7 @@ ClaudeCodeはブランチの切り替えを行い、Issueの内容に基づい�
 ### インストール
 
 ```bash
-npm install -g claude-code-dispatcher
+pnpm add -g claude-code-dispatcher
 ```
 
 ## 要件

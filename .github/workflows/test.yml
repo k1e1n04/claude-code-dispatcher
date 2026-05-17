@@ -6,7 +6,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
-      - 'package*.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - 'tsconfig.json'
       - 'jest.config.js'
   push:
@@ -14,7 +15,8 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
-      - 'package*.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
       - 'tsconfig.json'
       - 'jest.config.js'
 
@@ -34,26 +36,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 11
+
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        cache: 'pnpm'
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Run type checking
-      run: npm run typecheck
+      run: pnpm run typecheck
 
     - name: Run linting
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Run unit tests
-      run: npm test
+      run: pnpm test
 
     - name: Run tests with coverage
-      run: npm run test:coverage
+      run: pnpm run test:coverage
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
@@ -80,17 +86,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 11
+
     - name: Setup Node.js 22.x
       uses: actions/setup-node@v4
       with:
         node-version: 22.x
-        cache: 'npm'
+        cache: 'pnpm'
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build project
-      run: npm run build
+      run: pnpm run build
 
     - name: Verify CLI can be executed
       run: |

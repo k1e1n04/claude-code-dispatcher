@@ -12,31 +12,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 11
+
     - name: Setup Node.js 20.x
       uses: actions/setup-node@v4
       with:
         node-version: 20.x
-        cache: 'npm'
+        cache: 'pnpm'
 
     - name: Install dependencies
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Run TypeScript type checking
       run: |
         echo "🔍 Running TypeScript type checking..."
-        npm run typecheck
+        pnpm run typecheck
         echo "✅ Type checking passed"
 
     - name: Run ESLint
       run: |
         echo "🎯 Running ESLint..."
-        npm run lint
+        pnpm run lint
         echo "✅ Linting passed"
 
     - name: Run tests with coverage
       run: |
         echo "🧪 Running unit tests with coverage..."
-        npm run test:coverage
+        pnpm run test:coverage
         echo "✅ Tests passed"
 
     - name: Validate package.json
@@ -56,5 +60,5 @@ jobs:
     - name: Check for security vulnerabilities
       run: |
         echo "🔒 Checking for security vulnerabilities..."
-        npm audit --audit-level high || echo "⚠️ Security audit completed with warnings"
+        pnpm audit --audit-level high || echo "⚠️ Security audit completed with warnings"
         echo "✅ Security check completed"
