@@ -23,7 +23,7 @@ With a locally running dispatcher, you can fully leverage a subscription-based C
 
 ## Prerequisites
 
-- Node.js 18.0.0 or higher
+- Node.js 22.0.0 or higher
 - [GitHub CLI](https://cli.github.com/) installed and authenticated
 - [Claude CLI](https://claude.ai/code) installed and authenticated (supports `--print` flag for non-interactive mode)
 - Git repository with appropriate permissions
